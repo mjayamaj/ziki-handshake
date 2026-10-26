@@ -1,0 +1,366 @@
+import React from 'react';
+import type { ActionProposal } from '../types';
+import {
+  CheckCircle2,
+  MessageSquare,
+  Clock,
+  Coins,
+  FileCode,
+  Check,
+} from 'lucide-react';
+import { VoiceNotePlayer } from './VoiceNotePlayer';
+
+interface ActionDeckProps {
+  proposals: ActionProposal[];
+  onApprove: (proposal: ActionProposal) => void;
+  onReject: (proposalId: string) => void;
+  onAskAgent: (proposal: ActionProposal) => void;
+}
+
+export const ActionDeck: React.FC<ActionDeckProps> = ({
+  proposals,
+  onApprove,
+  onReject,
+  onAskAgent,
+}) => {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Section Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>Action Handshake Feed</span>
+            <span
+              style={{
+                background: '#eff6ff',
+                color: '#2563eb',
+                fontSize: '12px',
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: '9999px',
+                border: '1px solid #bfdbfe',
+              }}
+            >
+              {proposals.length} awaiting your OK
+            </span>
+          </h2>
+          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+            Agents investigate and propose. You make the call with a single click.
+          </p>
+        </div>
+      </div>
+
+      {/* Proposals List or Empty State */}
+      {proposals.length === 0 ? (
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px dashed #cbd5e1',
+            borderRadius: '12px',
+            padding: '36px 20px',
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              background: '#eff6ff',
+              color: '#2563eb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 12px auto',
+            }}
+          >
+            <Check size={22} />
+          </div>
+          <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
+            Board is Clear!
+          </h3>
+          <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '360px', margin: '0 auto' }}>
+            All agent proposals have been reviewed. Agents are actively scanning and running heartbeats.
+          </p>
+        </div>
+      ) : (
+        proposals.map((proposal) => (
+          <ProposalCard
+            key={proposal.id}
+            proposal={proposal}
+            onApprove={() => onApprove(proposal)}
+            onReject={() => onReject(proposal.id)}
+            onAskAgent={() => onAskAgent(proposal)}
+          />
+        ))
+      )}
+    </div>
+  );
+};
+
+const ProposalCard: React.FC<{
+  proposal: ActionProposal;
+  onApprove: () => void;
+  onReject: () => void;
+  onAskAgent: () => void;
+}> = ({ proposal, onApprove, onReject, onAskAgent }) => {
+  const getSeverityBadge = (severity: string) => {
+    switch (severity) {
+      case 'critical':
+        return { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca', label: 'Critical' };
+      case 'high':
+        return { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa', label: 'High' };
+      case 'medium':
+        return { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe', label: 'Medium' };
+      default:
+        return { bg: '#f8fafc', text: '#475569', border: '#e2e8f0', label: 'Low' };
+    }
+  };
+
+  const getCategoryTitle = (category: string) => {
+    switch (category) {
+      case 'bid':
+        return { label: 'Bidding Proposal', color: '#2563eb', bg: '#eff6ff' };
+      case 'validate':
+        return { label: 'Issue Validation', color: '#0284c7', bg: '#f0f9ff' };
+      default:
+        return { label: 'PR Verdict', color: '#059669', bg: '#ecfdf5' };
+    }
+  };
+
+  const severityStyle = getSeverityBadge(proposal.severity);
+  const categoryStyle = getCategoryTitle(proposal.category);
+
+  return (
+    <div
+      style={{
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '12px',
+        padding: '18px 20px',
+        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.03)',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 6px 16px rgba(37, 99, 235, 0.08)';
+        e.currentTarget.style.borderColor = '#bfdbfe';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 2px 4px rgba(15, 23, 42, 0.03)';
+        e.currentTarget.style.borderColor = '#e2e8f0';
+      }}
+    >
+      {/* Top Meta Line */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Agent Pill */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#f8fafc',
+              padding: '3px 10px',
+              borderRadius: '9999px',
+              border: '1px solid #e2e8f0',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#0f172a',
+            }}
+          >
+            <span
+              style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                background: '#2563eb',
+              }}
+            />
+            <span>{proposal.agentName}</span>
+          </div>
+
+          {/* Action category */}
+          <span
+            style={{
+              background: categoryStyle.bg,
+              color: categoryStyle.color,
+              fontSize: '11px',
+              fontWeight: 700,
+              padding: '3px 8px',
+              borderRadius: '6px',
+            }}
+          >
+            {categoryStyle.label}
+          </span>
+
+          <span style={{ fontSize: '12px', color: '#64748b' }}>
+            #{proposal.issueId} • {proposal.repo}
+          </span>
+        </div>
+
+        {/* Right badges */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {proposal.independentCheckPassed && (
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#059669',
+                background: '#ecfdf5',
+                border: '1px solid #a7f3d0',
+                padding: '2px 8px',
+                borderRadius: '9999px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <Check size={12} />
+              Independent Safe
+            </span>
+          )}
+
+          <span
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              color: severityStyle.text,
+              background: severityStyle.bg,
+              border: `1px solid ${severityStyle.border}`,
+              padding: '2px 8px',
+              borderRadius: '9999px',
+            }}
+          >
+            {severityStyle.label}
+          </span>
+        </div>
+      </div>
+
+      {/* Title */}
+      <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '10px' }}>
+        {proposal.title}
+      </h3>
+
+      {/* Humane Voice Note Briefing */}
+      {proposal.voiceMemoText && (
+        <div style={{ marginBottom: '12px' }}>
+          <VoiceNotePlayer
+            agentName={proposal.agentName}
+            voiceText={proposal.voiceMemoText}
+            durationSeconds={proposal.voiceDurationSeconds || 12}
+          />
+        </div>
+      )}
+
+      {/* Plan Details & Snippet */}
+      <div
+        style={{
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '12px 14px',
+          marginBottom: '14px',
+        }}
+      >
+        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>
+          PROPOSED PLAN & FINDINGS:
+        </div>
+        <p style={{ fontSize: '13px', color: '#334155', lineHeight: 1.5, marginBottom: '8px' }}>
+          {proposal.plan}
+        </p>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '11px',
+            color: '#2563eb',
+            background: '#ffffff',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            border: '1px solid #e2e8f0',
+            width: 'fit-content',
+          }}
+        >
+          <FileCode size={13} />
+          <code>{proposal.fileSnippet}</code>
+        </div>
+      </div>
+
+      {/* Bottom Bar: Stats & 1-Tap Buttons */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '4px' }}>
+        {/* Economics & Time */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+            <Coins size={15} color="#2563eb" />
+            <span>+{proposal.pointsReward} pts</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
+            <Clock size={14} />
+            <span>ETA ~{proposal.etaMinutes} mins</span>
+          </div>
+          <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+            {proposal.timestamp}
+          </div>
+        </div>
+
+        {/* 1-Tap Decisions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={onReject}
+            style={{
+              background: '#ffffff',
+              color: '#64748b',
+              border: '1px solid #e2e8f0',
+              padding: '7px 12px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 600,
+            }}
+          >
+            Decline
+          </button>
+
+          <button
+            onClick={onAskAgent}
+            style={{
+              background: '#eff6ff',
+              color: '#2563eb',
+              border: '1px solid #bfdbfe',
+              padding: '7px 12px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+          >
+            <MessageSquare size={13} />
+            <span>Ask {proposal.agentName}</span>
+          </button>
+
+          <button
+            onClick={onApprove}
+            style={{
+              background: '#2563eb',
+              color: '#ffffff',
+              border: 'none',
+              padding: '7px 16px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+            }}
+          >
+            <CheckCircle2 size={15} />
+            <span>Approve & Execute</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
