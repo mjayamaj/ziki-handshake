@@ -68,14 +68,15 @@ export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
   return (
     <div
       style={{
-        background: '#ffffff',
+        background: '#f8fafc',
         border: '1px solid #bfdbfe',
         borderRadius: '10px',
-        padding: compact ? '8px 12px' : '10px 14px',
+        padding: compact ? '6px 12px' : '8px 14px',
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
-        boxShadow: '0 2px 5px rgba(37, 99, 235, 0.04)',
+        maxWidth: '420px',
+        boxShadow: '0 1px 3px rgba(37, 99, 235, 0.05)',
       }}
       role="region"
       aria-label={`Voice note from ${agentName}`}

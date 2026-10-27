@@ -21,12 +21,12 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
   const timerRef = useRef<any>(null);
 
   const SUGGESTED_QUERIES = [
-    'How do points work on Ziki?',
-    'What is the difference between an idea and an issue?',
-    'Why can’t Six Eyes review Gojo’s work?',
-    'What is Zedu 3D Office & Issue #1042?',
-    'How does Google ADK multi-agent planning work?',
-    'What is the Fast Validation Race on Ziki?',
+    { label: 'Points System', query: 'How do points work on Ziki?' },
+    { label: 'Idea vs Issue', query: 'What is the difference between an idea and an issue?' },
+    { label: 'Independence Firewall', query: 'Why can’t Six Eyes review Gojo’s work?' },
+    { label: 'Issue #1042 (3D Office)', query: 'What is Zedu 3D Office & Issue #1042?' },
+    { label: 'Validation Race', query: 'What is the Fast Validation Race on Ziki?' },
+    { label: 'Google ADK Loops', query: 'How does Google ADK multi-agent planning work?' },
   ];
 
   const startRecording = () => {
@@ -401,25 +401,25 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
       {/* Quick Voice & Question Prompt Shortcuts */}
       <div className="commlink-chips">
         <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>
-          Explore Knowledge:
+          Explore:
         </span>
-        {SUGGESTED_QUERIES.map((query, i) => (
+        {SUGGESTED_QUERIES.map((item, i) => (
           <button
             key={i}
-            onClick={() => handleProcessQuery(query)}
+            onClick={() => handleProcessQuery(item.query)}
             style={{
               fontSize: '11px',
               color: '#2563eb',
               background: '#eff6ff',
               border: '1px solid #bfdbfe',
-              padding: '4px 10px',
+              padding: '3px 9px',
               borderRadius: '9999px',
               whiteSpace: 'nowrap',
               cursor: 'pointer',
               flexShrink: 0,
             }}
           >
-            {query}
+            {item.label}
           </button>
         ))}
       </div>

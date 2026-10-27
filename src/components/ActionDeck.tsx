@@ -297,7 +297,17 @@ const ProposalCard: React.FC<{
           <button
             onClick={onReject}
             className="btn-ghost"
-            style={{ minHeight: '38px', padding: '6px 12px' }}
+            style={{
+              minHeight: '36px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+              background: '#ffffff',
+              color: '#64748b',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}
             aria-label={`Decline proposal on #${proposal.issueId}`}
           >
             Decline
@@ -306,7 +316,20 @@ const ProposalCard: React.FC<{
           <button
             onClick={onAskAgent}
             className="btn-secondary"
-            style={{ minHeight: '38px', padding: '6px 14px' }}
+            style={{
+              minHeight: '36px',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              border: '1px solid #bfdbfe',
+              background: '#eff6ff',
+              color: '#2563eb',
+              fontWeight: 600,
+              fontSize: '13px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+            }}
             aria-label={`Ask ${proposal.agentName} for clarification`}
           >
             <MessageSquare size={14} />
@@ -316,7 +339,21 @@ const ProposalCard: React.FC<{
           <button
             onClick={onApprove}
             className="btn-primary"
-            style={{ minHeight: '38px', padding: '6px 16px' }}
+            style={{
+              minHeight: '36px',
+              padding: '6px 16px',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#10b981',
+              color: '#ffffff',
+              fontWeight: 700,
+              fontSize: '13px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)',
+            }}
             aria-label={`Approve and execute plan on #${proposal.issueId}`}
           >
             <CheckCircle2 size={15} />

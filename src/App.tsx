@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import './App.css';
 import { Navbar } from './components/Navbar';
 import { ActionDeck } from './components/ActionDeck';
+import { OfferRadar } from './components/OfferRadar';
 import { AgentRoster } from './components/AgentRoster';
 import { ClaimSentinel } from './components/ClaimSentinel';
 import { StandingInstructions } from './components/StandingInstructions';
@@ -20,6 +22,8 @@ import {
 
 import type { DispatchOffer, ActionProposal, ActiveClaim, LedgerEntry, StandingInstruction, AgentInfo } from './types';
 
+type DashboardTab = 'proposals' | 'offers' | 'blogger' | 'team' | 'ledger';
+
 export function App() {
   const [agents, setAgents] = useState<AgentInfo[]>(INITIAL_AGENTS);
   const [offers, setOffers] = useState<DispatchOffer[]>(INITIAL_OFFERS);
@@ -30,6 +34,7 @@ export function App() {
   const [totalPoints, setTotalPoints] = useState<number>(385);
   const targetPoints = 500;
 
+  const [activeTab, setActiveTab] = useState<DashboardTab>('proposals');
   const [clarifyingProposal, setClarifyingProposal] = useState<ActionProposal | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -43,11 +48,8 @@ export function App() {
   // Handshake Action 1: Approve Proposal
   const handleApproveProposal = (proposal: ActionProposal) => {
     setProposals((prev) => prev.filter((p) => p.id !== proposal.id));
-
-    // Award points
     setTotalPoints((prev) => prev + proposal.pointsReward);
 
-    // Update agent points & claim
     setAgents((prev) =>
       prev.map((agent) => {
         if (agent.id === proposal.agentId) {
@@ -61,7 +63,6 @@ export function App() {
       })
     );
 
-    // If it was a bid proposal, add to active claims with 15m heartbeat
     if (proposal.category === 'bid') {
       const newClaim: ActiveClaim = {
         id: `claim-${proposal.issueId}`,
@@ -76,7 +77,6 @@ export function App() {
       setClaims((prev) => [newClaim, ...prev]);
     }
 
-    // Append to ledger
     const now = new Date();
     const timeStr = now.toTimeString().split(' ')[0];
     const newEntry: LedgerEntry = {
@@ -124,31 +124,31 @@ export function App() {
     showToast(`Claim accepted within 60s window! +${offer.points} points credited.`);
   };
 
-  // Simulate an incoming dispatch offer handled quietly in background by Blogger
+  const handleDeclineOffer = (offerId: string) => {
+    setOffers((prev) => prev.filter((o) => o.id !== offerId));
+    showToast('Offer declined. Released back to community pool.');
+  };
+
+  // Simulate an incoming dispatch offer
   const handleSimulateOffer = () => {
     const randomId = Math.floor(1100 + Math.random() * 50);
-    const pointsAwarded = 10;
-    
-    setTotalPoints((prev) => prev + pointsAwarded);
-    setAgents((prev) =>
-      prev.map((a) => (a.id === 'six-eyes' ? { ...a, pointsEarned: a.pointsEarned + pointsAwarded } : a))
-    );
-
-    const now = new Date();
-    const timeStr = now.toTimeString().split(' ')[0];
-    const newEntry: LedgerEntry = {
-      id: `tx-${Date.now()}`,
-      timestamp: timeStr,
-      agentName: 'Blogger',
-      action: `Auto-review completed on PR #${randomId - 700} (neo-mando)`,
+    const newOffer: DispatchOffer = {
+      id: `offer-${Date.now()}`,
       issueId: randomId,
-      points: pointsAwarded,
-      status: 'credited',
+      title: `Fix unhandled error in pkg/centrifugo WebSocket upgrade handshake`,
+      repo: 'zedu-team-neo-mando/zedu-be',
+      type: 'pr_review',
+      points: 10,
+      secondsRemaining: 60,
+      writeAccessRequired: false,
+      pullRequestUrl: `https://github.com/zedu-team-neo-mando/zedu-be/pull/${randomId - 600}`,
+      notes: 'Blogger spotted an open PR review offer. Zero write access needed.',
     };
-    setLedger((prev) => [newEntry, ...prev]);
 
-    showToast(`Blogger completed review on PR #${randomId - 700}. +10 pts credited!`);
-    VoiceEngine.speak(`Blogger here. I completed the review on issue ${randomId} in the background. Ten points credited to your team!`, 'Blogger');
+    setOffers((prev) => [newOffer, ...prev]);
+    setActiveTab('offers');
+    showToast(`Incoming 60s Dispatch Offer on #${randomId}!`);
+    VoiceEngine.speak(`Attention supervisor: a new sixty-second dispatch offer arrived for issue ${randomId}. Claim it before the timer expires!`, 'Blogger');
   };
 
   const handleToggleInstruction = (id: string) => {
@@ -183,6 +183,7 @@ export function App() {
     setLedger(INITIAL_LEDGER);
     setInstructions(INITIAL_INSTRUCTIONS);
     setTotalPoints(385);
+    setActiveTab('proposals');
     showToast('Board state reset to initial demo defaults.');
   };
 
@@ -207,13 +208,64 @@ export function App() {
 
   return (
     <div className="app-container">
-      {/* Top Navbar */}
+      {/* 1. Standard Top Navbar */}
       <Navbar
         totalPoints={totalPoints}
         targetPoints={targetPoints}
         onSimulateOffer={handleSimulateOffer}
         onReset={handleReset}
       />
+
+      {/* 2. Standard View Selector Tabs */}
+      <nav className="dashboard-subnav" aria-label="Dashboard views">
+        <div className="dashboard-subnav-inner">
+          <div className="tab-list">
+            <button
+              onClick={() => setActiveTab('proposals')}
+              className={`tab-btn ${activeTab === 'proposals' ? 'active' : ''}`}
+            >
+              <span>⚡ Action Feed</span>
+              <span className={`tab-badge ${proposals.length > 0 ? 'tab-badge-blue' : 'tab-badge-muted'}`}>
+                {proposals.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('offers')}
+              className={`tab-btn ${activeTab === 'offers' ? 'active' : ''}`}
+            >
+              <span>📡 60s Offer Radar</span>
+              <span className={`tab-badge ${offers.length > 0 ? 'tab-badge-emerald' : 'tab-badge-muted'}`}>
+                {offers.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('blogger')}
+              className={`tab-btn ${activeTab === 'blogger' ? 'active' : ''}`}
+            >
+              <span>🤖 Blogger Copilot</span>
+              <span className="tab-badge tab-badge-muted">AI</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('team')}
+              className={`tab-btn ${activeTab === 'team' ? 'active' : ''}`}
+            >
+              <span>👥 Agent Team & Sentinel</span>
+              <span className="tab-badge tab-badge-muted">{agents.length}</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('ledger')}
+              className={`tab-btn ${activeTab === 'ledger' ? 'active' : ''}`}
+            >
+              <span>📜 Reward Ledger</span>
+              <span className="tab-badge tab-badge-muted">{ledger.length}</span>
+            </button>
+          </div>
+        </div>
+      </nav>
 
       {/* Toast Notification */}
       {notification && (
@@ -233,7 +285,7 @@ export function App() {
             fontSize: '13px',
             fontWeight: 600,
             boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
-            zIndex: 60,
+            zIndex: 70,
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
@@ -241,53 +293,122 @@ export function App() {
           role="status"
           aria-live="polite"
         >
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6', flexShrink: 0 }}></span>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6', flexShrink: 0 }} />
           <span style={{ flex: 1 }}>{notification}</span>
         </div>
       )}
 
-      {/* Main Container */}
+      {/* Main Container Content based on Tab */}
       <main className="dashboard-main">
-        {/* Humane Voice Comm-Link (Walkie-Talkie & Blogger Assistant) */}
-        <HumaneCommLink
-          onInstructionReceived={handleAddInstruction}
-          onVoiceAction={handleVoiceAction}
-        />
+        {activeTab === 'proposals' && (
+          <div className="dashboard-grid">
+            {/* Primary Column: Action Proposals & Active Offers */}
+            <div>
+              {offers.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <OfferRadar
+                    offers={offers}
+                    onAccept={handleAcceptOffer}
+                    onDecline={handleDeclineOffer}
+                  />
+                </div>
+              )}
 
-        {/* Responsive Dashboard Grid */}
-        <div className="dashboard-grid">
-          {/* Left Column: 1-Tap Action Handshake Deck */}
-          <div>
-            <ActionDeck
-              proposals={proposals}
-              onApprove={handleApproveProposal}
-              onReject={handleRejectProposal}
-              onAskAgent={(p) => setClarifyingProposal(p)}
+              <ActionDeck
+                proposals={proposals}
+                onApprove={handleApproveProposal}
+                onReject={handleRejectProposal}
+                onAskAgent={(p) => setClarifyingProposal(p)}
+              />
+            </div>
+
+            {/* Sidebar Column: Blogger AI Copilot & Sentinel */}
+            <div className="sidebar-column">
+              <HumaneCommLink
+                onInstructionReceived={handleAddInstruction}
+                onVoiceAction={handleVoiceAction}
+              />
+
+              <ClaimSentinel
+                claims={claims}
+                onManualHeartbeat={handleManualHeartbeat}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'offers' && (
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
+                Live 60-Second Dispatch Offers
+              </h2>
+              <p style={{ fontSize: '13px', color: '#64748b' }}>
+                Fast validation race offers. Solver claims require write access; PR reviews are zero-risk signoffs.
+              </p>
+            </div>
+
+            {offers.length === 0 ? (
+              <div
+                style={{
+                  background: '#ffffff',
+                  border: '1px dashed #cbd5e1',
+                  borderRadius: '12px',
+                  padding: '40px 20px',
+                  textAlign: 'center',
+                }}
+              >
+                <p style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a', marginBottom: '8px' }}>
+                  No Active 60s Dispatch Offers
+                </p>
+                <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+                  Blogger is actively monitoring Ziki queues. You can simulate an incoming offer to test.
+                </p>
+                <button onClick={handleSimulateOffer} className="btn-primary">
+                  Simulate Incoming Offer (+10 pts)
+                </button>
+              </div>
+            ) : (
+              <OfferRadar
+                offers={offers}
+                onAccept={handleAcceptOffer}
+                onDecline={handleDeclineOffer}
+              />
+            )}
+          </div>
+        )}
+
+        {activeTab === 'blogger' && (
+          <div style={{ maxWidth: '780px', margin: '0 auto' }}>
+            <HumaneCommLink
+              onInstructionReceived={handleAddInstruction}
+              onVoiceAction={handleVoiceAction}
             />
           </div>
+        )}
 
-          {/* Right Column: Agents, Heartbeat Sentinel & Standing Intentions */}
-          <div className="sidebar-column">
-            {/* Agent Roster */}
+        {activeTab === 'team' && (
+          <div className="dashboard-grid">
             <AgentRoster agents={agents} />
+            <div className="sidebar-column">
+              <ClaimSentinel
+                claims={claims}
+                onManualHeartbeat={handleManualHeartbeat}
+              />
+              <StandingInstructions
+                instructions={instructions}
+                onToggle={handleToggleInstruction}
+                onAdd={handleAddInstruction}
+              />
+            </div>
+          </div>
+        )}
 
-            {/* Heartbeat Sentinel */}
-            <ClaimSentinel
-              claims={claims}
-              onManualHeartbeat={handleManualHeartbeat}
-            />
-
-            {/* Standing Instructions */}
-            <StandingInstructions
-              instructions={instructions}
-              onToggle={handleToggleInstruction}
-              onAdd={handleAddInstruction}
-            />
-
-            {/* Audit Ledger */}
+        {activeTab === 'ledger' && (
+          <div style={{ maxWidth: '860px', margin: '0 auto' }}>
             <AuditLedger entries={ledger} />
           </div>
-        </div>
+        )}
       </main>
 
       {/* Clarification Q&A Modal */}
