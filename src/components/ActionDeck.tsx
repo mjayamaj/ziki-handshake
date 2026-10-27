@@ -7,6 +7,7 @@ import {
   Coins,
   FileCode,
   Check,
+  ShieldCheck,
 } from 'lucide-react';
 import { VoiceNotePlayer } from './VoiceNotePlayer';
 
@@ -26,9 +27,9 @@ export const ActionDeck: React.FC<ActionDeckProps> = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Section Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
         <div>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span>Action Handshake Feed</span>
             <span
               style={{
@@ -41,11 +42,11 @@ export const ActionDeck: React.FC<ActionDeckProps> = ({
                 border: '1px solid #bfdbfe',
               }}
             >
-              {proposals.length} awaiting your OK
+              {proposals.length} awaiting your approval
             </span>
           </h2>
           <p style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-            Agents investigate and propose. You make the call with a single click.
+            Your agents investigate issues and propose solutions. You decide with 1 tap.
           </p>
         </div>
       </div>
@@ -56,7 +57,7 @@ export const ActionDeck: React.FC<ActionDeckProps> = ({
           style={{
             background: '#ffffff',
             border: '1px dashed #cbd5e1',
-            borderRadius: '12px',
+            borderRadius: '14px',
             padding: '36px 20px',
             textAlign: 'center',
           }}
@@ -77,7 +78,7 @@ export const ActionDeck: React.FC<ActionDeckProps> = ({
             <Check size={22} />
           </div>
           <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
-            Board is Clear!
+            All Clear — No Pending Proposals
           </h3>
           <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '360px', margin: '0 auto' }}>
             All agent proposals have been reviewed. Agents are actively scanning and running heartbeats.
@@ -107,13 +108,13 @@ const ProposalCard: React.FC<{
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca', label: 'Critical' };
+        return { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca', label: 'Critical Priority' };
       case 'high':
-        return { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa', label: 'High' };
+        return { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa', label: 'High Priority' };
       case 'medium':
-        return { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe', label: 'Medium' };
+        return { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe', label: 'Medium Priority' };
       default:
-        return { bg: '#f8fafc', text: '#475569', border: '#e2e8f0', label: 'Low' };
+        return { bg: '#f8fafc', text: '#475569', border: '#e2e8f0', label: 'Low Priority' };
     }
   };
 
@@ -124,7 +125,7 @@ const ProposalCard: React.FC<{
       case 'validate':
         return { label: 'Issue Validation', color: '#0284c7', bg: '#f0f9ff' };
       default:
-        return { label: 'PR Verdict', color: '#059669', bg: '#ecfdf5' };
+        return { label: 'PR Review', color: '#059669', bg: '#ecfdf5' };
     }
   };
 
@@ -132,27 +133,10 @@ const ProposalCard: React.FC<{
   const categoryStyle = getCategoryTitle(proposal.category);
 
   return (
-    <div
-      style={{
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '12px',
-        padding: '18px 20px',
-        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.03)',
-        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 6px 16px rgba(37, 99, 235, 0.08)';
-        e.currentTarget.style.borderColor = '#bfdbfe';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 2px 4px rgba(15, 23, 42, 0.03)';
-        e.currentTarget.style.borderColor = '#e2e8f0';
-      }}
-    >
+    <div className="proposal-card">
       {/* Top Meta Line */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className="proposal-meta-top">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {/* Agent Pill */}
           <div
             style={{
@@ -199,7 +183,7 @@ const ProposalCard: React.FC<{
         </div>
 
         {/* Right badges */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {proposal.independentCheckPassed && (
             <span
               style={{
@@ -214,9 +198,10 @@ const ProposalCard: React.FC<{
                 alignItems: 'center',
                 gap: '4px',
               }}
+              title="Verified by independent firewall rule to prevent collusion"
             >
-              <Check size={12} />
-              Independent Safe
+              <ShieldCheck size={12} />
+              Peer Verified Safe
             </span>
           )}
 
@@ -237,7 +222,7 @@ const ProposalCard: React.FC<{
       </div>
 
       {/* Title */}
-      <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '10px' }}>
+      <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '10px', lineHeight: 1.4 }}>
         {proposal.title}
       </h3>
 
@@ -262,15 +247,15 @@ const ProposalCard: React.FC<{
           marginBottom: '14px',
         }}
       >
-        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>
-          PROPOSED PLAN & FINDINGS:
+        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>
+          Agent Solution & Plan:
         </div>
         <p style={{ fontSize: '13px', color: '#334155', lineHeight: 1.5, marginBottom: '8px' }}>
           {proposal.plan}
         </p>
         <div
           style={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
             fontSize: '11px',
@@ -279,21 +264,24 @@ const ProposalCard: React.FC<{
             padding: '4px 8px',
             borderRadius: '6px',
             border: '1px solid #e2e8f0',
-            width: 'fit-content',
+            maxWidth: '100%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
-          <FileCode size={13} />
-          <code>{proposal.fileSnippet}</code>
+          <FileCode size={13} style={{ flexShrink: 0 }} />
+          <code style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{proposal.fileSnippet}</code>
         </div>
       </div>
 
       {/* Bottom Bar: Stats & 1-Tap Buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '4px' }}>
+      <div className="proposal-footer">
         {/* Economics & Time */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="proposal-stats">
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
             <Coins size={15} color="#2563eb" />
-            <span>+{proposal.pointsReward} pts</span>
+            <span>+{proposal.pointsReward} pts reward</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
             <Clock size={14} />
@@ -305,56 +293,31 @@ const ProposalCard: React.FC<{
         </div>
 
         {/* 1-Tap Decisions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="proposal-actions">
           <button
             onClick={onReject}
-            style={{
-              background: '#ffffff',
-              color: '#64748b',
-              border: '1px solid #e2e8f0',
-              padding: '7px 12px',
-              borderRadius: '8px',
-              fontSize: '12px',
-              fontWeight: 600,
-            }}
+            className="btn-ghost"
+            style={{ minHeight: '38px', padding: '6px 12px' }}
+            aria-label={`Decline proposal on #${proposal.issueId}`}
           >
             Decline
           </button>
 
           <button
             onClick={onAskAgent}
-            style={{
-              background: '#eff6ff',
-              color: '#2563eb',
-              border: '1px solid #bfdbfe',
-              padding: '7px 12px',
-              borderRadius: '8px',
-              fontSize: '12px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
+            className="btn-secondary"
+            style={{ minHeight: '38px', padding: '6px 14px' }}
+            aria-label={`Ask ${proposal.agentName} for clarification`}
           >
-            <MessageSquare size={13} />
+            <MessageSquare size={14} />
             <span>Ask {proposal.agentName}</span>
           </button>
 
           <button
             onClick={onApprove}
-            style={{
-              background: '#2563eb',
-              color: '#ffffff',
-              border: 'none',
-              padding: '7px 16px',
-              borderRadius: '8px',
-              fontSize: '13px',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
-            }}
+            className="btn-primary"
+            style={{ minHeight: '38px', padding: '6px 16px' }}
+            aria-label={`Approve and execute plan on #${proposal.issueId}`}
           >
             <CheckCircle2 size={15} />
             <span>Approve & Execute</span>

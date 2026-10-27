@@ -104,7 +104,6 @@ export function App() {
     setOffers((prev) => prev.filter((o) => o.id !== offer.id));
     setTotalPoints((prev) => prev + offer.points);
 
-    // Attribute to Gojo or Six Eyes
     setAgents((prev) =>
       prev.map((a) => (a.id === 'six-eyes' ? { ...a, pointsEarned: a.pointsEarned + offer.points } : a))
     );
@@ -140,16 +139,16 @@ export function App() {
     const newEntry: LedgerEntry = {
       id: `tx-${Date.now()}`,
       timestamp: timeStr,
-      agentName: 'Blogger (Overseer)',
-      action: `Background auto-claim on PR #${randomId - 700} review (neo-mando)`,
+      agentName: 'Blogger',
+      action: `Auto-review completed on PR #${randomId - 700} (neo-mando)`,
       issueId: randomId,
       points: pointsAwarded,
       status: 'credited',
     };
     setLedger((prev) => [newEntry, ...prev]);
 
-    showToast(`Blogger auto-claimed PR review #${randomId - 700} in background. +10 pts credited!`);
-    VoiceEngine.speak(`Blogger here. I auto-claimed PR review on issue ${randomId} in the background. Ten points credited without any timer stress.`, 'Blogger');
+    showToast(`Blogger completed review on PR #${randomId - 700}. +10 pts credited!`);
+    VoiceEngine.speak(`Blogger here. I completed the review on issue ${randomId} in the background. Ten points credited to your team!`, 'Blogger');
   };
 
   const handleToggleInstruction = (id: string) => {
@@ -207,7 +206,7 @@ export function App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
+    <div className="app-container">
       {/* Top Navbar */}
       <Navbar
         totalPoints={totalPoints}
@@ -223,42 +222,40 @@ export function App() {
           style={{
             position: 'fixed',
             bottom: '24px',
-            right: '24px',
+            right: '20px',
+            left: '20px',
+            maxWidth: '420px',
+            margin: '0 auto',
             background: '#0f172a',
             color: '#ffffff',
             padding: '12px 18px',
-            borderRadius: '10px',
+            borderRadius: '12px',
             fontSize: '13px',
             fontWeight: 600,
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2)',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
             zIndex: 60,
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '10px',
           }}
+          role="status"
+          aria-live="polite"
         >
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6' }}></span>
-          <span>{notification}</span>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6', flexShrink: 0 }}></span>
+          <span style={{ flex: 1 }}>{notification}</span>
         </div>
       )}
 
       {/* Main Container */}
-      <main style={{ maxWidth: '1280px', width: '100%', margin: '0 auto', padding: '24px 28px', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {/* Humane Voice Comm-Link (Walkie-Talkie & Blogger Overseer) */}
+      <main className="dashboard-main">
+        {/* Humane Voice Comm-Link (Walkie-Talkie & Blogger Assistant) */}
         <HumaneCommLink
           onInstructionReceived={handleAddInstruction}
           onVoiceAction={handleVoiceAction}
         />
 
-        {/* 2-Column Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.65fr) minmax(320px, 1fr)',
-            gap: '24px',
-            alignItems: 'start',
-          }}
-        >
+        {/* Responsive Dashboard Grid */}
+        <div className="dashboard-grid">
           {/* Left Column: 1-Tap Action Handshake Deck */}
           <div>
             <ActionDeck
@@ -270,7 +267,7 @@ export function App() {
           </div>
 
           {/* Right Column: Agents, Heartbeat Sentinel & Standing Intentions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="sidebar-column">
             {/* Agent Roster */}
             <AgentRoster agents={agents} />
 
@@ -294,11 +291,14 @@ export function App() {
       </main>
 
       {/* Clarification Q&A Modal */}
-      <ClarificationModal
-        proposal={clarifyingProposal}
-        onClose={() => setClarifyingProposal(null)}
-        onApprove={handleApproveProposal}
-      />
+      {clarifyingProposal && (
+        <ClarificationModal
+          key={clarifyingProposal.id}
+          proposal={clarifyingProposal}
+          onClose={() => setClarifyingProposal(null)}
+          onApprove={handleApproveProposal}
+        />
+      )}
     </div>
   );
 }

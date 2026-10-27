@@ -27,18 +27,20 @@ export const StandingInstructions: React.FC<StandingInstructionsProps> = ({
       style={{
         background: '#ffffff',
         border: '1px solid #e2e8f0',
-        borderRadius: '12px',
+        borderRadius: '14px',
         padding: '18px',
         boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)',
       }}
+      role="region"
+      aria-label="Standing Instructions"
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
         <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Sliders size={16} color="#2563eb" />
           <span>Standing Instructions</span>
         </h3>
-        <span style={{ fontSize: '11px', color: '#64748b' }}>
-          Real-time Agent Guardrails
+        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>
+          Live Safety Guardrails
         </span>
       </div>
 
@@ -51,37 +53,47 @@ export const StandingInstructions: React.FC<StandingInstructionsProps> = ({
               display: 'flex',
               alignItems: 'flex-start',
               gap: '10px',
-              padding: '8px 10px',
+              padding: '10px 12px',
               borderRadius: '8px',
               background: inst.active ? '#eff6ff' : '#f8fafc',
               border: inst.active ? '1px solid #bfdbfe' : '1px solid #f1f5f9',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
+              minHeight: '44px',
+            }}
+            role="checkbox"
+            aria-checked={inst.active}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                onToggle(inst.id);
+              }
             }}
           >
             <div
               style={{
-                width: '16px',
-                height: '16px',
-                borderRadius: '4px',
+                width: '18px',
+                height: '18px',
+                borderRadius: '5px',
                 border: inst.active ? '1.5px solid #2563eb' : '1.5px solid #cbd5e1',
                 background: inst.active ? '#2563eb' : '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#ffffff',
-                marginTop: '2px',
+                marginTop: '1px',
                 flexShrink: 0,
               }}
             >
-              {inst.active && <Check size={11} strokeWidth={3} />}
+              {inst.active && <Check size={12} strokeWidth={3} />}
             </div>
             <div
               style={{
-                fontSize: '12px',
+                fontSize: '12.5px',
                 color: inst.active ? '#0f172a' : '#64748b',
                 fontWeight: inst.active ? 600 : 400,
-                lineHeight: 1.4,
+                lineHeight: 1.45,
               }}
             >
               {inst.text}
@@ -91,21 +103,23 @@ export const StandingInstructions: React.FC<StandingInstructionsProps> = ({
       </div>
 
       {/* Add Instruction Input */}
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <input
           type="text"
           value={newText}
           onChange={(e) => setNewText(e.target.value)}
-          placeholder="Instruct agents in plain English..."
+          placeholder="Instruct your agents in plain English..."
+          aria-label="New standing instruction for agents"
           style={{
-            flex: 1,
-            padding: '7px 10px',
+            flex: '1 1 180px',
+            padding: '8px 12px',
             fontSize: '12px',
             border: '1px solid #e2e8f0',
-            borderRadius: '6px',
+            borderRadius: '8px',
             outline: 'none',
             background: '#f8fafc',
             fontFamily: 'inherit',
+            minHeight: '38px',
           }}
           onFocus={(e) => {
             e.target.style.background = '#ffffff';
@@ -118,21 +132,11 @@ export const StandingInstructions: React.FC<StandingInstructionsProps> = ({
         />
         <button
           type="submit"
-          style={{
-            background: '#2563eb',
-            color: '#ffffff',
-            border: 'none',
-            padding: '7px 12px',
-            borderRadius: '6px',
-            fontSize: '12px',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-          }}
+          className="btn-primary"
+          style={{ minHeight: '38px', padding: '6px 14px', fontSize: '12px' }}
         >
           <Plus size={14} />
-          <span>Add</span>
+          <span>Add Rule</span>
         </button>
       </form>
     </div>

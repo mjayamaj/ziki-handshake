@@ -20,7 +20,7 @@ export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
   const [playbackSpeed, setPlaybackSpeed] = useState<1 | 1.5>(1);
   const timerRef = useRef<any>(null);
 
-  const bars = VoiceEngine.getWaveform(agentName.length * 7, compact ? 18 : 28);
+  const bars = VoiceEngine.getWaveform(agentName.length * 7, compact ? 16 : 24);
 
   const handleTogglePlay = () => {
     if (isPlaying) {
@@ -77,13 +77,15 @@ export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
         gap: '12px',
         boxShadow: '0 2px 5px rgba(37, 99, 235, 0.04)',
       }}
+      role="region"
+      aria-label={`Voice note from ${agentName}`}
     >
       {/* Play/Pause Button */}
       <button
         onClick={handleTogglePlay}
         style={{
-          width: compact ? '30px' : '34px',
-          height: compact ? '30px' : '34px',
+          width: compact ? '32px' : '36px',
+          height: compact ? '32px' : '36px',
           borderRadius: '50%',
           background: isPlaying ? '#1d4ed8' : '#2563eb',
           color: '#ffffff',
@@ -92,31 +94,33 @@ export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
           justifyContent: 'center',
           boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
           flexShrink: 0,
+          cursor: 'pointer',
         }}
         title={isPlaying ? 'Pause voice briefing' : 'Play voice briefing'}
+        aria-label={isPlaying ? 'Pause voice memo' : 'Play voice memo'}
       >
         {isPlaying ? <Pause size={14} /> : <Play size={14} style={{ marginLeft: '2px' }} />}
       </button>
 
       {/* Waveform Visualization */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600, color: '#2563eb' }}>
-            <Mic size={12} />
-            <span>Voice Memo from {agentName}</span>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600, color: '#2563eb', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <Mic size={12} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Voice Briefing ({agentName})</span>
           </div>
-          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500, fontFamily: 'monospace' }}>
+          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500, fontFamily: 'monospace', flexShrink: 0 }}>
             {formatTime(currentTime)} / 0:{durationSeconds < 10 ? `0${durationSeconds}` : durationSeconds}
           </span>
         </div>
 
         {/* Animated Sound Wave Bars */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', height: '18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', height: '18px', overflow: 'hidden' }}>
           {bars.map((height, i) => {
             const barProgress = (i / bars.length) * 100;
             const isFilled = barProgress <= progressPercent;
             const barHeight = isPlaying
-              ? Math.max(3, Math.round(height * 16 * (0.6 + 0.4 * Math.sin(Date.now() / 150 + i))))
+              ? Math.max(3, Math.round(height * 16 * (0.6 + 0.4 * Math.sin(currentTime * 8 + i))))
               : Math.max(3, Math.round(height * 14));
 
             return (
@@ -128,6 +132,7 @@ export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
                   background: isFilled ? '#2563eb' : '#dbeafe',
                   borderRadius: '2px',
                   transition: 'height 0.15s ease, background 0.1s ease',
+                  minWidth: '2px',
                 }}
               />
             );
@@ -143,10 +148,13 @@ export const VoiceNotePlayer: React.FC<VoiceNotePlayerProps> = ({
           fontWeight: 700,
           color: '#2563eb',
           background: '#eff6ff',
-          padding: '3px 6px',
+          padding: '4px 7px',
           borderRadius: '4px',
           border: '1px solid #bfdbfe',
+          cursor: 'pointer',
+          flexShrink: 0,
         }}
+        aria-label={`Toggle playback speed, current speed ${playbackSpeed}x`}
       >
         {playbackSpeed}x
       </button>

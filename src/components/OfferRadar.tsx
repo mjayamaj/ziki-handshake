@@ -30,11 +30,8 @@ const SingleOfferCard: React.FC<{
   onAccept: () => void;
   onDecline: () => void;
 }> = ({ offer, onAccept, onDecline }) => {
+  // Initialized from offer.secondsRemaining, component remounts on key change
   const [timeLeft, setTimeLeft] = useState(offer.secondsRemaining);
-
-  useEffect(() => {
-    setTimeLeft(offer.secondsRemaining);
-  }, [offer.secondsRemaining]);
 
   useEffect(() => {
     if (timeLeft <= 0) {

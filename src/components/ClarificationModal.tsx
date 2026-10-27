@@ -3,7 +3,7 @@ import type { ActionProposal } from '../types';
 import { X, Send, Bot, CheckCircle2 } from 'lucide-react';
 
 interface ClarificationModalProps {
-  proposal: ActionProposal | null;
+  proposal: ActionProposal;
   onClose: () => void;
   onApprove: (proposal: ActionProposal) => void;
 }
@@ -13,8 +13,6 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
   onClose,
   onApprove,
 }) => {
-  if (!proposal) return null;
-
   const [question, setQuestion] = useState('');
   const [conversation, setConversation] = useState<Array<{ sender: 'human' | 'agent'; text: string }>>([
     {
@@ -25,8 +23,8 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
   const [isTyping, setIsTyping] = useState(false);
 
   const QUICK_QUESTIONS = [
-    'How did you verify the reproduction locally?',
-    'Will this affect any other screens or tests?',
+    'How did you verify this locally?',
+    'Will this affect any tests or screens?',
     'Can we shorten the ETA or reduce file changes?',
   ];
 
@@ -41,12 +39,12 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
 
     setTimeout(() => {
       let reply = '';
-      if (q.toLowerCase().includes('reproduction') || q.toLowerCase().includes('locally')) {
-        reply = `I verified this directly on https://office.groups.zedu.chat/neo-mando/office. On initial load of The Tower 3D office, the client prefetches /api/v1/office/rooms/reception/layout/draft without verifying admin role, throwing 403 Forbidden and popping up the alarming red error banner "only administrators can edit shared furniture". Adding a role check (isAdmin === true) before dispatching the request eliminates the false alert.`;
+      if (q.toLowerCase().includes('reproduction') || q.toLowerCase().includes('locally') || q.toLowerCase().includes('verify')) {
+        reply = `I verified this directly on the 3D office page. On initial load, the client requested /api/v1/office/rooms/reception/layout/draft without checking admin status, triggering a false-alarm red banner "only administrators can edit shared furniture". Adding a role check (isAdmin === true) before dispatching eliminates the false error cleanly.`;
       } else if (q.toLowerCase().includes('affect') || q.toLowerCase().includes('test')) {
-        reply = `Zero breaking changes. View-only members continue loading the canonical published layout normally. Verified against all existing Jest and Cypress test suites in zedu-fe with 0 regressions.`;
+        reply = `Zero breaking changes. Non-admin members continue loading the canonical layout normally. All existing test suites pass with 0 regressions.`;
       } else {
-        reply = `The fix requires only 4 lines of code in zedu-fe/src/features/office/reception/layout.ts, well below the ~400 line PR limit. Ready to branch as fix/1042-furniture-toast and open PR to zedu-team-neo-mando/zedu-fe upon your approval.`;
+        reply = `The fix requires only 4 lines of code in zedu-fe/src/features/office/reception/layout.ts, well below the ~400 line PR limit. Ready to branch and open a PR upon your approval!`;
       }
 
       setConversation([...newConvo, { sender: 'agent' as const, text: reply }]);
@@ -56,32 +54,14 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.4)',
-        backdropFilter: 'blur(3px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 50,
-        padding: '20px',
-      }}
+      className="modal-overlay"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="clarification-modal-title"
     >
       <div
-        style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          width: '100%',
-          maxWidth: '560px',
-          boxShadow: '0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05)',
-          border: '1px solid #e2e8f0',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '85vh',
-        }}
+        className="modal-dialog animate-slide-down"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -93,13 +73,14 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             background: '#f8fafc',
+            flexShrink: 0,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div
               style={{
-                width: '32px',
-                height: '32px',
+                width: '34px',
+                height: '34px',
                 borderRadius: '8px',
                 background: '#eff6ff',
                 color: '#2563eb',
@@ -113,11 +94,11 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
               <Bot size={18} />
             </div>
             <div>
-              <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+              <h3 id="clarification-modal-title" style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
                 Ask {proposal.agentName}
               </h3>
               <p style={{ fontSize: '11px', color: '#64748b' }}>
-                Clarifying Issue #{proposal.issueId}
+                Clarifying Issue #{proposal.issueId} • {proposal.title.slice(0, 40)}...
               </p>
             </div>
           </div>
@@ -125,12 +106,19 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
           <button
             onClick={onClose}
             style={{
-              color: '#94a3b8',
-              padding: '4px',
-              borderRadius: '6px',
+              color: '#64748b',
+              padding: '8px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '40px',
+              minHeight: '40px',
+              cursor: 'pointer',
             }}
+            aria-label="Close modal"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
@@ -144,6 +132,7 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
             flexDirection: 'column',
             gap: '12px',
             background: '#ffffff',
+            WebkitOverflowScrolling: 'touch',
           }}
         >
           {conversation.map((msg, i) => (
@@ -166,6 +155,7 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
                   color: msg.sender === 'human' ? '#ffffff' : '#0f172a',
                   borderBottomRightRadius: msg.sender === 'human' ? '4px' : '12px',
                   borderBottomLeftRadius: msg.sender === 'agent' ? '4px' : '12px',
+                  wordBreak: 'break-word',
                 }}
               >
                 {msg.text}
@@ -176,13 +166,13 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
           {isTyping && (
             <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Bot size={13} color="#2563eb" />
-              <span>{proposal.agentName} is thinking...</span>
+              <span>{proposal.agentName} is reviewing...</span>
             </div>
           )}
         </div>
 
         {/* Quick Question Chips */}
-        <div style={{ padding: '8px 20px', background: '#f8fafc', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '6px', overflowX: 'auto' }}>
+        <div style={{ padding: '8px 16px', background: '#f8fafc', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '6px', overflowX: 'auto', flexShrink: 0, WebkitOverflowScrolling: 'touch' }}>
           {QUICK_QUESTIONS.map((q, idx) => (
             <button
               key={idx}
@@ -193,9 +183,10 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
                 background: '#ffffff',
                 border: '1px solid #bfdbfe',
                 borderRadius: '9999px',
-                padding: '4px 10px',
+                padding: '5px 12px',
                 whiteSpace: 'nowrap',
                 fontWeight: 500,
+                flexShrink: 0,
               }}
             >
               {q}
@@ -205,6 +196,7 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
 
         {/* Footer: Input & Instant 1-Tap Handshake */}
         <div
+          className="modal-footer"
           style={{
             padding: '14px 20px',
             borderTop: '1px solid #e2e8f0',
@@ -212,6 +204,7 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
             alignItems: 'center',
             gap: '10px',
             background: '#ffffff',
+            flexShrink: 0,
           }}
         >
           <input
@@ -220,6 +213,7 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder={`Ask ${proposal.agentName} a question...`}
+            aria-label={`Ask ${proposal.agentName} a question`}
             style={{
               flex: 1,
               padding: '9px 12px',
@@ -228,23 +222,14 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
               border: '1px solid #e2e8f0',
               outline: 'none',
               fontFamily: 'inherit',
+              minHeight: '40px',
             }}
           />
 
           <button
             onClick={() => handleSend()}
-            style={{
-              background: '#eff6ff',
-              color: '#2563eb',
-              border: '1px solid #bfdbfe',
-              padding: '9px 14px',
-              borderRadius: '8px',
-              fontSize: '13px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
+            className="btn-secondary"
+            style={{ minHeight: '40px', padding: '8px 16px' }}
           >
             <Send size={14} />
             <span>Ask</span>
@@ -255,20 +240,8 @@ export const ClarificationModal: React.FC<ClarificationModalProps> = ({
               onApprove(proposal);
               onClose();
             }}
-            style={{
-              background: '#2563eb',
-              color: '#ffffff',
-              border: 'none',
-              padding: '9px 16px',
-              borderRadius: '8px',
-              fontSize: '13px',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
-              whiteSpace: 'nowrap',
-            }}
+            className="btn-primary"
+            style={{ minHeight: '40px', padding: '8px 18px', whiteSpace: 'nowrap' }}
           >
             <CheckCircle2 size={15} />
             <span>Approve Plan</span>
