@@ -6,10 +6,8 @@ import {
   History,
   Sparkles,
   ChevronDown,
-  Users,
   ArrowRight,
   ShieldCheck,
-  CheckCircle2,
 } from 'lucide-react';
 
 export type NavTab = 'roster' | 'handshake' | 'offers' | 'ledger' | 'copilot' | 'rules';
@@ -168,19 +166,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="truncate">Safety Firewall</span>
             <span className="sidebar-tag-verified">4 Active</span>
           </button>
-
-          <div className="sidebar-section-title" style={{ marginTop: '22px' }}>
-            Mission Protocol
-          </div>
-
-          <div className="sidebar-muted-row">
-            <CheckCircle2 size={16} className="text-emerald-500" />
-            <span>Zero-Trust Approval</span>
-          </div>
-          <div className="sidebar-muted-row">
-            <Users size={16} />
-            <span>Squad Firewall</span>
-          </div>
         </nav>
 
         {/* Bottom Docs Callout & Profile */}
