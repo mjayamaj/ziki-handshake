@@ -1,18 +1,14 @@
 import React from 'react';
 import {
   ChevronRight,
-  ShieldCheck,
-  Zap,
-  RefreshCw,
   Menu,
-  Activity,
 } from 'lucide-react';
 
 interface NavbarProps {
   totalPoints: number;
   targetPoints: number;
-  onSimulateOffer: () => void;
-  onReset: () => void;
+  onSimulateOffer?: () => void;
+  onReset?: () => void;
   activeTabName: string;
   onToggleMobileMenu?: () => void;
 }
@@ -20,8 +16,6 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   totalPoints,
   targetPoints,
-  onSimulateOffer,
-  onReset,
   activeTabName,
   onToggleMobileMenu,
 }) => {
@@ -70,45 +64,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Right: Security & Demo Actions */}
-      <div className="topbar-right">
-        {/* Human Safe Handshake Badge */}
-        <div
-          className="topbar-safe-badge"
-          title="Zero-Trust Guarantee: Autonomous code execution requires human confirmation"
-        >
-          <ShieldCheck size={14} className="text-emerald-600" />
-          <span>Handshake Enforced</span>
-        </div>
-
-        {/* Demo Simulator Trigger */}
-        <button
-          type="button"
-          onClick={onSimulateOffer}
-          className="topbar-action-btn btn-sim"
-          title="Simulate an incoming 60s fast validation offer from an agent"
-        >
-          <Zap size={13} />
-          <span className="hidden-mobile">Simulate Offer</span>
-        </button>
-
-        {/* Reset */}
-        <button
-          type="button"
-          onClick={onReset}
-          className="topbar-action-btn"
-          title="Reset board state back to defaults"
-        >
-          <RefreshCw size={13} />
-          <span className="hidden-mobile">Reset</span>
-        </button>
-
-        {/* Live Status indicator */}
-        <div className="topbar-live-indicator hidden-mobile" title="Autonomous monitoring active">
-          <Activity size={13} className="text-emerald-600" />
-          <span>Live Sentinel</span>
-        </div>
-      </div>
+      {/* Right spacer to preserve layout balance */}
+      <div className="topbar-right" />
     </header>
   );
 };
