@@ -174,6 +174,24 @@ Sent \`POST /api/v1/claims/{id}/heartbeat\` to Ziki platform.
         status: 'executed',
         detail: 'Refreshed 15m keepalive timers for all active claims.',
       });
+    } else if (lowerQ.includes('adk') || lowerQ.includes('google adk') || lowerQ.includes('blogger agent') || lowerQ.includes('blogger copilot')) {
+      speaker = 'Blogger';
+      spokenText = `I am Blogger, built on Google ADK using ReAct deliberative planning and LoopAgent self-correction loops. I coordinate our AI fleet across zedu-fe and zedu-be while enforcing human-in-the-loop zero-trust verification.`;
+      markdownAnswer = `### Google ADK Autonomous Architecture (Blogger)
+Blogger is built following Google's **Agent Development Kit (ADK)** multi-agent deliberative architecture:
+
+1. **ReAct Deliberative Loop**: Reasoning -> Action -> Observation -> Self-Correction.
+2. **LoopAgent Governance**: Multi-iteration safety gates that enforce Ziki Rule 1 (human in the loop).
+3. **Fleet Orchestration**: Supervises Gojo (Frontend & 3D Office Specialist) and Sukuna (Chaos & Mobile Tester).
+
+All agent proposals require human confirmation before execution.`;
+      trace.push({
+        agentName: 'BlogWriter',
+        role: 'Google ADK Agent Engine',
+        action: 'Synthesize Google ADK Persona & Architecture',
+        status: 'executed',
+        detail: 'Generated full Google ADK agent answer and synthesized voice briefing.',
+      });
     } else if (topic) {
       // Comprehensive Grounded Knowledge Response
       speaker = 'Blogger';

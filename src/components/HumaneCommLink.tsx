@@ -67,7 +67,8 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
   const [transcribedText, setTranscribedText] = useState('');
   const [typedQuery, setTypedQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [activeAudioMsgId, setActiveAudioMsgId] = useState<string | null>(null);
+  const isPlayingAudio = activeAudioMsgId !== null;
   const [showTrace, setShowTrace] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -159,20 +160,22 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
       // Execute through Google ADK Multi-Agent Deliberative Loop
       const result = await BloggerAgent.processQueryAsync(speech);
 
-      // Play synthesized audio voice
-      setIsPlayingAudio(true);
-      VoiceEngine.speak(result.spokenText, result.speaker);
-      setTimeout(() => setIsPlayingAudio(false), 5000);
-
       msgCountRef.current += 1;
+      const botMsgId = `bot-${msgCountRef.current}`;
       const botMsg: ChatMessage = {
-        id: `bot-${msgCountRef.current}`,
+        id: botMsgId,
         sender: 'blogger',
         text: result.spokenText,
         timestamp: timeStr,
         adkResult: result,
       };
       setMessages((prev) => [...prev, botMsg]);
+
+      // Speak the Google ADK Blogger answer aloud
+      setActiveAudioMsgId(botMsgId);
+      VoiceEngine.speak(result.spokenText, result.speaker, () => {
+        setActiveAudioMsgId((curr) => (curr === botMsgId ? null : curr));
+      });
 
       // Execute any direct actions
       if (result.actionType === 'approve_1042') {
@@ -189,23 +192,32 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
     }
   };
 
-  const handleToggleVoicePlayback = (text: string) => {
-    if (isPlayingAudio) {
+  const handleToggleVoicePlayback = (msgId: string, text: string, speaker: string = 'Blogger') => {
+    if (activeAudioMsgId === msgId) {
       VoiceEngine.stop();
-      setIsPlayingAudio(false);
+      setActiveAudioMsgId(null);
     } else {
-      setIsPlayingAudio(true);
-      VoiceEngine.speak(text, 'Blogger');
-      setTimeout(() => setIsPlayingAudio(false), 5000);
+      VoiceEngine.stop();
+      setActiveAudioMsgId(msgId);
+      VoiceEngine.speak(text, speaker, () => {
+        setActiveAudioMsgId((curr) => (curr === msgId ? null : curr));
+      });
     }
   };
 
   useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isProcessing]);
+    // Only scroll to bottom when there are multiple messages or processing,
+    // avoiding abruptly scrolling the top hero banner out of view on page load
+    if (messages.length > 1 || isProcessing) {
+      chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages.length, isProcessing]);
 
   useEffect(() => {
-    return () => clearInterval(timerRef.current);
+    return () => {
+      clearInterval(timerRef.current);
+      VoiceEngine.stop();
+    };
   }, []);
 
   const pendingProposal = proposals.find((p) => p.issueId === 1042) || proposals[0];
@@ -291,26 +303,40 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
                     <div className="audio-voice-bar">
                       <button
                         type="button"
-                        onClick={() => handleToggleVoicePlayback(msg.text)}
+                        onClick={() =>
+                          handleToggleVoicePlayback(
+                            msg.id,
+                            msg.text,
+                            msg.adkResult?.speaker || 'Blogger'
+                          )
+                        }
                         className="audio-play-btn"
-                        title={isPlayingAudio ? 'Pause synthetic voice' : 'Listen to Blogger voice memo'}
+                        title={
+                          activeAudioMsgId === msg.id
+                            ? 'Pause voice'
+                            : 'Listen to Blogger synthetic voice'
+                        }
                         aria-label="Toggle voice playback"
                       >
-                        {isPlayingAudio ? <Pause size={14} /> : <Play size={14} />}
+                        {activeAudioMsgId === msg.id ? <Pause size={14} /> : <Play size={14} />}
                       </button>
 
                       <div className="audio-waveform-bars">
-                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
-                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
-                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
-                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
-                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
-                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
-                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
-                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
+                        {[...Array(8)].map((_, barIdx) => (
+                          <span
+                            key={barIdx}
+                            className={`audio-bar ${
+                              activeAudioMsgId === msg.id ? 'animating' : ''
+                            }`}
+                          />
+                        ))}
                       </div>
 
-                      <span className="audio-meta">0:12 • Synthesized Voice</span>
+                      <span className="audio-meta">
+                        {activeAudioMsgId === msg.id
+                          ? 'Speaking Google ADK Voice...'
+                          : '0:12 • Synthesized Voice'}
+                      </span>
                     </div>
                   )}
 

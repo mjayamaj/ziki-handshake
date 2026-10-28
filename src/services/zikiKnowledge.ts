@@ -246,9 +246,9 @@ if (currentUser?.role === 'admin') {
   {
     id: 'google-adk-architecture',
     category: 'adk',
-    keywords: ['google adk', 'adk', 'codelab', 'agent development kit', 'gemini flash', 'loopagent', 'react pattern'],
+    keywords: ['google adk', 'adk', 'codelab', 'agent development kit', 'gemini flash', 'loopagent', 'react pattern', 'blogger agent', 'blogger', 'who is blogger', 'adk agent', 'google agent'],
     title: 'Google ADK Agent Framework & Deliberative Architecture',
-    summary: 'Built on Google ADK (Agent Development Kit), using ReAct reasoning, LoopAgent self-correction loops, and structured planning.',
+    summary: 'I am Blogger, an autonomous copilot built using Google Agent Development Kit (ADK). I employ ReAct reasoning, LoopAgent self-correction loops, and deliberative planning to supervise Gojo and Sukuna under zero-trust governance.',
     detailedText: `Google's Agent Development Kit (ADK) introduces the modern paradigm of autonomous software:
 
 1. ReAct Pattern (Reasoning + Acting):
