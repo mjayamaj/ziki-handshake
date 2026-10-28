@@ -384,26 +384,31 @@ export function App() {
             </div>
           )}
 
-          {/* TAB 5: BLOGGER COPILOT */}
+          {/* TAB 1: BLOGGER COPILOT COMMAND DECK */}
           {activeTab === 'copilot' && (
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <HumaneCommLink
-                onInstructionReceived={(text) => {
-                  handleAddInstruction(text);
-                }}
-                onVoiceAction={(actionType, text) => {
-                  if (actionType === 'approve_1042') {
-                    const p = proposals.find((x) => x.issueId === 1042);
-                    if (p) handleApproveProposal(p);
-                    else showToast('Issue #1042 is already resolved!');
-                  } else if (actionType === 'approve_offer' && offers.length > 0) {
-                    handleAcceptOffer(offers[0]);
-                  } else {
-                    showToast(`Voice command received: "${text}"`);
-                  }
-                }}
-              />
-            </div>
+            <HumaneCommLink
+              agents={agents}
+              proposals={proposals}
+              offers={offers}
+              totalPoints={totalPoints}
+              targetPoints={targetPoints}
+              onApproveProposal={handleApproveProposal}
+              onNavigateTab={(tab) => setActiveTab(tab)}
+              onInstructionReceived={(text) => {
+                handleAddInstruction(text);
+              }}
+              onVoiceAction={(actionType, text) => {
+                if (actionType === 'approve_1042') {
+                  const p = proposals.find((x) => x.issueId === 1042);
+                  if (p) handleApproveProposal(p);
+                  else showToast('Issue #1042 is already resolved!');
+                } else if (actionType === 'approve_offer' && offers.length > 0) {
+                  handleAcceptOffer(offers[0]);
+                } else {
+                  showToast(`Voice command received: "${text}"`);
+                }
+              }}
+            />
           )}
 
           {/* TAB 6: SAFETY FIREWALL & RULES */}

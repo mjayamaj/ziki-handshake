@@ -84,24 +84,24 @@ const ProposalCard: React.FC<{
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca', label: 'Critical' };
+        return { bg: 'rgba(239, 68, 68, 0.15)', text: '#f87171', border: 'rgba(239, 68, 68, 0.35)', label: 'Critical' };
       case 'high':
-        return { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa', label: 'High Priority' };
+        return { bg: 'rgba(249, 115, 22, 0.15)', text: '#fb923c', border: 'rgba(249, 115, 22, 0.35)', label: 'High Priority' };
       case 'medium':
-        return { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe', label: 'Medium Priority' };
+        return { bg: 'rgba(59, 130, 246, 0.15)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.35)', label: 'Medium Priority' };
       default:
-        return { bg: '#f8fafc', text: '#475569', border: '#e2e8f0', label: 'Low Priority' };
+        return { bg: 'rgba(148, 163, 184, 0.15)', text: '#94a3b8', border: 'rgba(148, 163, 184, 0.35)', label: 'Low Priority' };
     }
   };
 
   const getCategoryTitle = (category: string) => {
     switch (category) {
       case 'bid':
-        return { label: 'Code Fix Bid', color: '#2563eb', bg: '#eff6ff' };
+        return { label: 'Code Fix Bid', color: '#60a5fa', bg: 'rgba(37, 99, 235, 0.2)' };
       case 'validate':
-        return { label: 'Bug Validation', color: '#0284c7', bg: '#f0f9ff' };
+        return { label: 'Bug Validation', color: '#38bdf8', bg: 'rgba(2, 132, 199, 0.2)' };
       default:
-        return { label: 'PR Review', color: '#059669', bg: '#ecfdf5' };
+        return { label: 'PR Review', color: '#34d399', bg: 'rgba(5, 150, 105, 0.2)' };
     }
   };
 

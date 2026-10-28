@@ -1,32 +1,122 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Send, Radio, Volume2, Bot, ChevronDown, ChevronUp, Sparkles, CheckCircle2 } from 'lucide-react';
+import {
+  Mic,
+  MicOff,
+  Send,
+  Radio,
+  Bot,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Play,
+  Pause,
+  ShieldCheck,
+  Zap,
+  Activity,
+  ArrowRight,
+  Code2,
+  Flame,
+  Check,
+} from 'lucide-react';
 import { VoiceEngine } from '../services/voiceEngine';
 import { BloggerAgent, type ADKAgentResult } from '../services/bloggerAgent';
+import type { AgentInfo, ActionProposal, DispatchOffer } from '../types';
+import type { NavTab } from './Sidebar';
 
 interface HumaneCommLinkProps {
   onInstructionReceived: (text: string) => void;
   onVoiceAction: (actionType: 'approve_1042' | 'approve_offer' | 'custom', text: string) => void;
+  agents: AgentInfo[];
+  proposals: ActionProposal[];
+  offers: DispatchOffer[];
+  totalPoints: number;
+  targetPoints: number;
+  onApproveProposal: (proposal: ActionProposal) => void;
+  onNavigateTab: (tab: NavTab) => void;
+}
+
+interface ChatMessage {
+  id: string;
+  sender: 'human' | 'blogger';
+  text: string;
+  timestamp: string;
+  adkResult?: ADKAgentResult;
+  isAudioPlaying?: boolean;
+}
+
+function getFormattedTime(): string {
+  try {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return 'Now';
+  }
 }
 
 export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
   onInstructionReceived,
   onVoiceAction,
+  agents,
+  proposals,
+  offers,
+  totalPoints,
+  targetPoints,
+  onApproveProposal,
+  onNavigateTab,
 }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [transcribedText, setTranscribedText] = useState('');
   const [typedQuery, setTypedQuery] = useState('');
-  const [agentResult, setAgentResult] = useState<ADKAgentResult | null>(null);
-  const [showTrace, setShowTrace] = useState(false);
-  const timerRef = useRef<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [showTrace, setShowTrace] = useState(true);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 'msg-init',
+      sender: 'blogger',
+      text: 'Good morning, Commander! I am Blogger, your lead AI copilot. All 3 agents (Blogger, Gojo, Sukuna) are active. Issue #1042 (3D Office draft prefetch) has been verified and is waiting for your 1-tap handshake approval.',
+      timestamp: 'Just now',
+    },
+  ]);
 
-  const SUGGESTED_QUERIES = [
-    { label: 'Points System', query: 'How do points work on Ziki?' },
-    { label: 'Idea vs Issue', query: 'What is the difference between an idea and an issue?' },
-    { label: 'Independence Firewall', query: 'Why can’t Six Eyes review Gojo’s work?' },
-    { label: 'Issue #1042 (3D Office)', query: 'What is Zedu 3D Office & Issue #1042?' },
-    { label: 'Validation Race', query: 'What is the Fast Validation Race on Ziki?' },
-    { label: 'Google ADK Loops', query: 'How does Google ADK multi-agent planning work?' },
+  const timerRef = useRef<any>(null);
+  const msgCountRef = useRef(1);
+  const chatBottomRef = useRef<HTMLDivElement>(null);
+
+  // Quick Action Command Tiles
+  const QUICK_COMMANDS = [
+    {
+      icon: <Sparkles size={16} className="text-blue-400" />,
+      title: 'Issue #1042 Voice Briefing',
+      desc: '3D Office layout toast false-alarm analysis',
+      query: 'What is Zedu 3D Office & Issue #1042?',
+      badge: '12s Audio',
+      color: 'blue',
+    },
+    {
+      icon: <Activity size={16} className="text-emerald-400" />,
+      title: 'Autonomous Fleet Audit',
+      desc: 'Check Blogger, Gojo & Sukuna compliance',
+      query: 'Run autonomous diagnostic sweep on all agents',
+      badge: 'Zero-Trust',
+      color: 'emerald',
+    },
+    {
+      icon: <ShieldCheck size={16} className="text-purple-400" />,
+      title: 'Independence Firewall',
+      desc: 'Verify Gojo & Sukuna collusion boundary',
+      query: 'Why can’t Sukuna review Gojo’s work?',
+      badge: 'Rule 1 Enforced',
+      color: 'purple',
+    },
+    {
+      icon: <Zap size={16} className="text-amber-400" />,
+      title: 'Triage 60s Dispatch Offer',
+      desc: offers.length > 0 ? `${offers[0].title.slice(0, 36)}...` : 'PR #408 zero-risk review (+10 pts)',
+      query: 'What is the Fast Validation Race on Ziki?',
+      badge: `${offers.length} Active`,
+      color: 'amber',
+    },
   ];
 
   const startRecording = () => {
@@ -38,7 +128,6 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
       setRecordingSeconds((prev) => prev + 1);
     }, 1000);
 
-    // Check if SpeechRecognition is available
     if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
       try {
         const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -52,7 +141,7 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
           setTranscribedText(transcript);
         };
         recog.onerror = (err: any) => {
-          console.debug('Speech recognition ended:', err);
+          console.debug('Speech recognition error:', err);
         };
         recog.start();
       } catch (e) {
@@ -70,358 +159,464 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
 
     setTranscribedText(speech);
     setTypedQuery('');
+    setIsProcessing(true);
 
-    // Execute through Google ADK Multi-Agent Deliberative Loop with Live Gemini
-    const result = await BloggerAgent.processQueryAsync(speech);
-    setAgentResult(result);
+    const timeStr = getFormattedTime();
 
-    // Speak natural audio response
-    VoiceEngine.speak(result.spokenText, result.speaker);
+    msgCountRef.current += 1;
+    const humanMsg: ChatMessage = {
+      id: `user-${msgCountRef.current}`,
+      sender: 'human',
+      text: speech,
+      timestamp: timeStr,
+    };
+    setMessages((prev) => [...prev, humanMsg]);
 
-    // Dispatch autonomous actions if instructed
-    if (result.actionType === 'approve_1042') {
-      onVoiceAction('approve_1042', speech);
-    } else if (result.actionType === 'approve_offer') {
-      onVoiceAction('approve_offer', speech);
-    } else if (result.actionType === 'add_instruction') {
-      onInstructionReceived(result.actionPayload || speech);
+    try {
+      // Execute through Google ADK Multi-Agent Deliberative Loop
+      const result = await BloggerAgent.processQueryAsync(speech);
+
+      // Play synthesized audio voice
+      setIsPlayingAudio(true);
+      VoiceEngine.speak(result.spokenText, result.speaker);
+      setTimeout(() => setIsPlayingAudio(false), 5000);
+
+      msgCountRef.current += 1;
+      const botMsg: ChatMessage = {
+        id: `bot-${msgCountRef.current}`,
+        sender: 'blogger',
+        text: result.spokenText,
+        timestamp: timeStr,
+        adkResult: result,
+      };
+      setMessages((prev) => [...prev, botMsg]);
+
+      // Execute any direct actions
+      if (result.actionType === 'approve_1042') {
+        onVoiceAction('approve_1042', speech);
+      } else if (result.actionType === 'approve_offer') {
+        onVoiceAction('approve_offer', speech);
+      } else if (result.actionType === 'add_instruction') {
+        onInstructionReceived(result.actionPayload || speech);
+      }
+    } catch (e) {
+      console.error('Error running Blogger query:', e);
+    } finally {
+      setIsProcessing(false);
     }
   };
+
+  const handleToggleVoicePlayback = (text: string) => {
+    if (isPlayingAudio) {
+      VoiceEngine.stop();
+      setIsPlayingAudio(false);
+    } else {
+      setIsPlayingAudio(true);
+      VoiceEngine.speak(text, 'Blogger');
+      setTimeout(() => setIsPlayingAudio(false), 5000);
+    }
+  };
+
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isProcessing]);
 
   useEffect(() => {
     return () => clearInterval(timerRef.current);
   }, []);
 
+  const pendingProposal = proposals.find((p) => p.issueId === 1042) || proposals[0];
+  const percentComplete = Math.min(100, Math.round((totalPoints / targetPoints) * 100));
+
   return (
-    <div className="commlink-box" role="region" aria-label="Blogger Autonomous Agent & Voice Companion">
-      {/* Header */}
-      <div className="commlink-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              background: '#eff6ff',
-              color: '#2563eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #bfdbfe',
-              flexShrink: 0,
-            }}
-          >
-            <Bot size={18} />
+    <div className="copilot-mission-hub" role="region" aria-label="Blogger AI Copilot Command Deck">
+      {/* 1. Hero Intelligence Header with Ambient Cyber Glow */}
+      <div className="copilot-hero-banner">
+        <div className="copilot-hero-glow" aria-hidden="true" />
+        <div className="copilot-hero-content">
+          <div className="copilot-avatar-col">
+            <div className={`copilot-orb ${isRecording ? 'recording' : isPlayingAudio ? 'speaking' : 'ready'}`}>
+              <Bot size={28} className="copilot-bot-icon" />
+              <div className="orb-ring-wave" />
+              <div className="orb-ring-pulse" />
+            </div>
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                Blogger Autonomous Agent • Voice & Knowledge
-              </h3>
-              <span
-                style={{
-                  background: '#f0fdf4',
-                  color: '#16a34a',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  padding: '2px 8px',
-                  borderRadius: '9999px',
-                  border: '1px solid #bbf7d0',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                <Sparkles size={11} />
-                Google ADK Powered
+
+          <div className="copilot-hero-info">
+            <div className="copilot-tagline-row">
+              <span className="copilot-badge-core">
+                <Sparkles size={12} />
+                LEAD COPILOT &amp; ARCHITECT
+              </span>
+              <span className="copilot-badge-model">
+                Google ADK • Gemini 1.5 Pro + Claude 3.5 Sonnet
+              </span>
+              <span className="copilot-badge-live">
+                <span className="live-pulsar" />
+                18ms Realtime WebSocket
               </span>
             </div>
-            <p style={{ fontSize: '11px', color: '#64748b' }}>
-              Self-sufficient deliberative agent. Knows everything about Ziki, Zedu architecture, codebases, and rules.
+
+            <h1 className="copilot-hero-title">
+              Blogger AI Executive Command Deck
+            </h1>
+            <p className="copilot-hero-desc">
+              Your autonomous AI partner for Zedu Studio. Blogger supervises Gojo (Frontend &amp; 3D Office) and Sukuna (Mobile &amp; Chaos), enforces the Ziki Rule 1 Independence Firewall, and delivers safe, 1-tap handshakes.
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {agentResult && (
+        {/* 2. Interactive Quick Capability Cards */}
+        <div className="copilot-command-grid">
+          {QUICK_COMMANDS.map((cmd, idx) => (
             <button
-              onClick={() => setShowTrace((prev) => !prev)}
-              className="btn-ghost"
-              style={{ fontSize: '11px', padding: '4px 10px', minHeight: '32px' }}
-              aria-label="Toggle agent reasoning trace"
+              key={idx}
+              type="button"
+              onClick={() => handleProcessQuery(cmd.query)}
+              className={`command-tile card-${cmd.color}`}
             >
-              <span>ADK Reasoning Trace ({agentResult.executionTrace.length} steps)</span>
-              {showTrace ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+              <div className="tile-top">
+                <span className="tile-icon-box">{cmd.icon}</span>
+                <span className="tile-badge">{cmd.badge}</span>
+              </div>
+              <strong className="tile-title">{cmd.title}</strong>
+              <p className="tile-desc">{cmd.desc}</p>
             </button>
-          )}
-
-          <span
-            style={{
-              fontSize: '11px',
-              color: '#2563eb',
-              background: '#eff6ff',
-              padding: '3px 10px',
-              borderRadius: '9999px',
-              fontWeight: 600,
-              border: '1px solid #bfdbfe',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            <Radio size={12} />
-            Voice & Chat
-          </span>
+          ))}
         </div>
       </div>
 
-      {/* Main Recording & Response Strip */}
-      <div
-        className="commlink-strip"
-        style={{
-          background: isRecording ? '#eff6ff' : '#f8fafc',
-          border: isRecording ? '1.5px dashed #2563eb' : '1px solid #e2e8f0',
-        }}
-      >
-        <div className="commlink-mic-row">
-          {/* Push-to-Talk Mic Button */}
-          <button
-            onClick={isRecording ? () => handleProcessQuery(transcribedText || 'How do points work on Ziki?') : startRecording}
-            style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '50%',
-              background: isRecording ? '#ef4444' : '#2563eb',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: isRecording
-                ? '0 0 0 6px rgba(239, 68, 68, 0.25)'
-                : '0 4px 12px rgba(37, 99, 235, 0.3)',
-              flexShrink: 0,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-            title={isRecording ? 'Tap to finish voice note' : 'Tap to speak to Blogger'}
-            aria-label={isRecording ? 'Finish voice note' : 'Record voice note'}
-          >
-            {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
-          </button>
+      {/* 3. Main Split View: Left Chat & Audio Console, Right Live Telemetry */}
+      <div className="copilot-split-layout">
+        {/* Left Column: Conversational Voice Console */}
+        <div className="copilot-chat-panel">
+          {/* Conversation History Stream */}
+          <div className="chat-messages-container">
+            {messages.map((msg) => (
+              <div key={msg.id} className={`chat-bubble-row ${msg.sender === 'human' ? 'user' : 'blogger'}`}>
+                {msg.sender === 'blogger' && (
+                  <div className="chat-avatar blogger">
+                    <span>BL</span>
+                  </div>
+                )}
 
-          {/* Center: Live Audio Status / Answer */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {isRecording ? (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444', fontWeight: 700, fontSize: '13px' }}>
-                  <span
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      background: '#ef4444',
-                      animation: 'pulseSlow 1s infinite',
-                    }}
-                  />
-                  <span>Listening... (0:0{recordingSeconds})</span>
-                </div>
-                <p style={{ fontSize: '12px', color: '#2563eb', fontStyle: 'italic', marginTop: '2px', wordBreak: 'break-word' }}>
-                  {transcribedText || 'Speak any question about Ziki, Zedu, or instruct Blogger to take action...'}
-                </p>
-              </div>
-            ) : agentResult ? (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
-                  <Volume2 size={14} color="#2563eb" />
-                  <span style={{ color: '#2563eb' }}>{agentResult.speaker} replied:</span>
-                  {agentResult.actionType && agentResult.actionType !== 'none' && (
-                    <span
-                      style={{
-                        background: '#ecfdf5',
-                        color: '#059669',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        border: '1px solid #a7f3d0',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '3px',
-                      }}
-                    >
-                      <CheckCircle2 size={11} />
-                      Action Executed
+                <div className={`chat-bubble ${msg.sender === 'human' ? 'user-bubble' : 'blogger-bubble'}`}>
+                  <div className="bubble-header">
+                    <span className="bubble-author">
+                      {msg.sender === 'human' ? 'Human Supervisor' : 'Blogger (Lead Architect)'}
                     </span>
+                    <span className="bubble-time">{msg.timestamp}</span>
+                  </div>
+
+                  <p className="bubble-text">{msg.text}</p>
+
+                  {/* Audio Playback Controller for Blogger */}
+                  {msg.sender === 'blogger' && (
+                    <div className="audio-voice-bar">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleVoicePlayback(msg.text)}
+                        className="audio-play-btn"
+                        title={isPlayingAudio ? 'Pause synthetic voice' : 'Listen to Blogger voice memo'}
+                        aria-label="Toggle voice playback"
+                      >
+                        {isPlayingAudio ? <Pause size={14} /> : <Play size={14} />}
+                      </button>
+
+                      <div className="audio-waveform-bars">
+                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
+                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
+                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
+                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
+                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
+                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
+                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
+                        <span className={`audio-bar ${isPlayingAudio ? 'animating' : ''}`} />
+                      </div>
+
+                      <span className="audio-meta">0:12 • Synthesized Voice</span>
+                    </div>
+                  )}
+
+                  {/* Google ADK Multi-Agent Execution Trace & Details */}
+                  {msg.adkResult && (
+                    <div className="adk-trace-accordion">
+                      <button
+                        type="button"
+                        onClick={() => setShowTrace((prev) => !prev)}
+                        className="trace-toggle-btn"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Code2 size={13} className="text-blue-400" />
+                          <span>Google ADK Reasoning Engine ({msg.adkResult.executionTrace.length} Steps)</span>
+                        </div>
+                        {showTrace ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </button>
+
+                      {showTrace && (
+                        <div className="trace-expanded-body animate-slide-down">
+                          <div className="trace-steps-list">
+                            {msg.adkResult.executionTrace.map((step, sIdx) => (
+                              <div key={sIdx} className="trace-step-item">
+                                <span className={`step-badge ${step.status}`}>
+                                  {step.agentName}
+                                </span>
+                                <div className="step-content">
+                                  <strong className="step-action">{step.action}</strong>
+                                  <span className="step-detail">{step.detail}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {msg.adkResult.markdownAnswer && (
+                            <div className="trace-markdown">
+                              <pre>{msg.adkResult.markdownAnswer}</pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-                <p style={{ fontSize: '13px', color: '#1e293b', marginTop: '2px', lineHeight: 1.5, wordBreak: 'break-word' }}>
-                  "{agentResult.spokenText}"
-                </p>
-              </div>
-            ) : (
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
-                  Tap mic or ask Blogger anything about Ziki, Zedu, or your agents
-                </div>
-                <p style={{ fontSize: '11px', color: '#64748b' }}>
-                  Grounded in Ziki protocol docs, Zedu repositories, and Google ADK deliberative planning loops.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
 
-        {isRecording && (
-          <button
-            onClick={() => handleProcessQuery(transcribedText || 'How do points work on Ziki?')}
-            className="btn-primary"
-            style={{ minHeight: '38px', padding: '6px 14px', fontSize: '12px' }}
-          >
-            <Send size={13} />
-            <span>Send Memo</span>
-          </button>
-        )}
-      </div>
-
-      {/* Collapsible Google ADK Multi-Agent Execution Trace */}
-      {showTrace && agentResult && (
-        <div
-          className="animate-slide-down"
-          style={{
-            background: '#0f172a',
-            color: '#e2e8f0',
-            borderRadius: '10px',
-            padding: '14px 16px',
-            marginBottom: '10px',
-            fontSize: '12px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', borderBottom: '1px solid #334155', paddingBottom: '6px' }}>
-            <span style={{ fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.4px', fontSize: '11px' }}>
-              Google ADK Execution Trace (ReAct Deliberative Loop)
-            </span>
-            <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-              Confidence: 10/10 • Auto-Validated
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {agentResult.executionTrace.map((step, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '8px',
-                  background: '#1e293b',
-                  padding: '8px 10px',
-                  borderRadius: '6px',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    background: step.status === 'passed' ? '#065f46' : step.status === 'retry' ? '#991b1b' : '#1e40af',
-                    color: '#ffffff',
-                    flexShrink: 0,
-                  }}
-                >
-                  {step.agentName}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, color: '#f8fafc', fontSize: '12px' }}>
-                    {step.action}
+                {msg.sender === 'human' && (
+                  <div className="chat-avatar human">
+                    <span>HL</span>
                   </div>
-                  <div style={{ color: '#94a3b8', fontSize: '11px', marginTop: '2px', wordBreak: 'break-word' }}>
-                    {step.detail}
-                  </div>
-                </div>
+                )}
               </div>
             ))}
+
+            {isProcessing && (
+              <div className="chat-bubble-row blogger">
+                <div className="chat-avatar blogger">
+                  <span>BL</span>
+                </div>
+                <div className="chat-bubble blogger-bubble typing">
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                  <span className="typing-label">Blogger Deliberative Loop Running...</span>
+                </div>
+              </div>
+            )}
+
+            <div ref={chatBottomRef} />
           </div>
 
-          {/* Full Markdown Technical Summary */}
-          {agentResult.markdownAnswer && (
-            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #334155', color: '#cbd5e1', lineHeight: 1.5 }}>
-              <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '12px' }}>
-                {agentResult.markdownAnswer}
-              </pre>
+          {/* Tactical Bottom Input Console */}
+          <div className="copilot-input-console">
+            {/* Live Audio Visualizer Banner during push-to-talk */}
+            {isRecording && (
+              <div className="recording-status-strip animate-slide-down">
+                <div className="flex items-center gap-2 text-red-400 font-bold text-xs">
+                  <span className="recording-beacon" />
+                  <span>LISTENING TO SUPERVISOR (0:0{recordingSeconds})</span>
+                </div>
+                <div className="live-audio-bars">
+                  <span className="eq-bar bar-1" />
+                  <span className="eq-bar bar-2" />
+                  <span className="eq-bar bar-3" />
+                  <span className="eq-bar bar-4" />
+                  <span className="eq-bar bar-5" />
+                </div>
+                <span className="transcribe-preview">
+                  {transcribedText || 'Speak naturally into your microphone...'}
+                </span>
+              </div>
+            )}
+
+            <div className="input-row-bar">
+              {/* Push-to-Talk Tactile Button */}
+              <button
+                type="button"
+                onClick={isRecording ? () => handleProcessQuery(transcribedText || 'Explain Issue #1042') : startRecording}
+                className={`tactile-mic-btn ${isRecording ? 'active-pulse' : ''}`}
+                title={isRecording ? 'Click to finalize voice note' : 'Click to talk to Blogger'}
+                aria-label={isRecording ? 'Stop Recording' : 'Start Recording Voice Note'}
+              >
+                {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+              </button>
+
+              {/* Text Input */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (typedQuery.trim()) handleProcessQuery(typedQuery);
+                }}
+                className="input-form"
+              >
+                <input
+                  type="text"
+                  value={typedQuery}
+                  onChange={(e) => setTypedQuery(e.target.value)}
+                  placeholder="Ask Blogger anything about Ziki, Zedu, or instruct agents..."
+                  className="command-input"
+                  aria-label="Command input"
+                />
+                <button
+                  type="submit"
+                  disabled={!typedQuery.trim() || isProcessing}
+                  className="command-send-btn"
+                  title="Send command"
+                >
+                  <Send size={15} />
+                  <span>Execute</span>
+                </button>
+              </form>
+            </div>
+
+            <div className="input-shortcut-hints">
+              <span className="shortcut-pill">
+                <kbd>Enter</kbd> to Send
+              </span>
+              <span className="shortcut-pill">
+                <Radio size={11} className="text-emerald-400" />
+                Voice Recognition Active
+              </span>
+              <span className="shortcut-pill">
+                <ShieldCheck size={11} className="text-blue-400" />
+                Zero-Trust Guarantee
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Live Fleet Telemetry & Quick Action Deck */}
+        <aside className="copilot-telemetry-panel" aria-label="Live Fleet Telemetry">
+          {/* Telemetry Card 1: 3-Agent Live Fleet Status */}
+          <div className="telemetry-card">
+            <div className="telemetry-card-header">
+              <div className="flex items-center gap-2">
+                <Bot size={16} className="text-blue-400" />
+                <h3 className="telemetry-card-title">AI Fleet Live Telemetry</h3>
+              </div>
+              <span className="telemetry-status-pill">3 Online</span>
+            </div>
+
+            <div className="telemetry-agents-list">
+              {agents.map((agent) => (
+                <div key={agent.id} className="telemetry-agent-item">
+                  <div
+                    className="telemetry-avatar"
+                    style={{
+                      background: agent.colorTheme.bg,
+                      color: agent.colorTheme.text,
+                      borderColor: agent.colorTheme.ring,
+                    }}
+                  >
+                    <span>{agent.initials}</span>
+                    <span
+                      className="status-dot"
+                      style={{ background: agent.colorTheme.dot }}
+                    />
+                  </div>
+
+                  <div className="telemetry-agent-details">
+                    <div className="flex items-center justify-between">
+                      <strong className="agent-name">{agent.name}</strong>
+                      <span className="agent-points font-mono font-bold">{agent.pointsEarned} pts</span>
+                    </div>
+                    <span className="agent-role truncate">{agent.role}</span>
+                    <div className="agent-micro-bar">
+                      <span className="agent-model-chip truncate">{agent.model}</span>
+                      <span className="agent-res-chip">{agent.resolutionRate}% rate</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onNavigateTab('roster')}
+              className="telemetry-footer-link"
+            >
+              <span>Manage AI Fleet Roster</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
+
+          {/* Telemetry Card 2: 1-Tap Pending Handshake Spotlight */}
+          {pendingProposal && (
+            <div className="telemetry-card spotlight-card">
+              <div className="spotlight-header">
+                <span className="spotlight-tag">
+                  <Flame size={12} className="text-amber-400" />
+                  READY FOR HANDSHAKE
+                </span>
+                <span className="spotlight-points font-mono">+{pendingProposal.pointsReward} PTS</span>
+              </div>
+
+              <h4 className="spotlight-issue-title">
+                #{pendingProposal.issueId}: {pendingProposal.title}
+              </h4>
+
+              <p className="spotlight-fix-summary">
+                {pendingProposal.plainEnglishSummary?.theFix || pendingProposal.plan}
+              </p>
+
+              <div className="spotlight-author-row">
+                <span className="spotlight-badge">Author: {pendingProposal.agentName}</span>
+                <span className="spotlight-badge">Zero Risk</span>
+              </div>
+
+              <div className="spotlight-actions">
+                <button
+                  type="button"
+                  onClick={() => onApproveProposal(pendingProposal)}
+                  className="spotlight-approve-btn"
+                >
+                  <Check size={14} />
+                  <span>1-Tap Handshake Approve</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab('handshake')}
+                  className="spotlight-inspect-btn"
+                >
+                  Inspect Feed
+                </button>
+              </div>
             </div>
           )}
-        </div>
-      )}
 
-      {/* Alternative: Type Query to Blogger */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (typedQuery.trim()) handleProcessQuery(typedQuery);
-        }}
-        style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}
-      >
-        <input
-          type="text"
-          value={typedQuery}
-          onChange={(e) => setTypedQuery(e.target.value)}
-          placeholder="Ask Blogger anything about Ziki, Zedu, or agents..."
-          aria-label="Ask Blogger a question"
-          style={{
-            flex: '1 1 200px',
-            padding: '8px 12px',
-            fontSize: '12px',
-            borderRadius: '8px',
-            border: '1px solid #e2e8f0',
-            outline: 'none',
-            background: '#f8fafc',
-            fontFamily: 'inherit',
-            minHeight: '38px',
-          }}
-          onFocus={(e) => {
-            e.target.style.background = '#ffffff';
-            e.target.style.borderColor = '#2563eb';
-          }}
-          onBlur={(e) => {
-            e.target.style.background = '#f8fafc';
-            e.target.style.borderColor = '#e2e8f0';
-          }}
-        />
-        <button
-          type="submit"
-          className="btn-primary"
-          style={{ minHeight: '38px', padding: '6px 14px', fontSize: '12px' }}
-        >
-          <Send size={13} />
-          <span>Ask Blogger</span>
-        </button>
-      </form>
+          {/* Telemetry Card 3: Sprint 14 Points Meter */}
+          <div className="telemetry-card sprint-card">
+            <div className="sprint-header">
+              <div>
+                <span className="sprint-sub">SPRINT 14 GOAL</span>
+                <h4 className="sprint-title">Team Neo-Mando</h4>
+              </div>
+              <span className="sprint-pct font-mono font-bold text-blue-400">
+                {percentComplete}%
+              </span>
+            </div>
 
-      {/* Quick Voice & Question Prompt Shortcuts */}
-      <div className="commlink-chips">
-        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>
-          Explore:
-        </span>
-        {SUGGESTED_QUERIES.map((item, i) => (
-          <button
-            key={i}
-            onClick={() => handleProcessQuery(item.query)}
-            style={{
-              fontSize: '11px',
-              color: '#2563eb',
-              background: '#eff6ff',
-              border: '1px solid #bfdbfe',
-              padding: '3px 9px',
-              borderRadius: '9999px',
-              whiteSpace: 'nowrap',
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
-          >
-            {item.label}
-          </button>
-        ))}
+            <div className="sprint-progress-track">
+              <div
+                className="sprint-progress-fill"
+                style={{ width: `${percentComplete}%` }}
+              />
+            </div>
+
+            <div className="sprint-metrics-row">
+              <div className="metric-box">
+                <span className="metric-val font-mono">{totalPoints}</span>
+                <span className="metric-lbl">Points Credited</span>
+              </div>
+              <div className="metric-box">
+                <span className="metric-val font-mono">{targetPoints}</span>
+                <span className="metric-lbl">Target Target</span>
+              </div>
+              <div className="metric-box">
+                <span className="metric-val font-mono text-emerald-400">100%</span>
+                <span className="metric-lbl">Integrity Pass</span>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );
