@@ -200,11 +200,11 @@ ${topic.codeSnippet ? `**Reference:**\n\`\`\`bash\n${topic.codeSnippet}\n\`\`\``
       speaker = 'Blogger';
       actionType = 'add_instruction';
       actionPayload = query;
-      spokenText = `Understood! I analyzed your request and registered it as an active standing instruction for Gojo and Six Eyes.`;
+      spokenText = `Understood! I analyzed your request and registered it as an active standing instruction for Gojo and Sukuna.`;
       markdownAnswer = `### Standing Instruction Registered
 **Rule:** "${query}"  
 **Status:** Active Guardrail  
-**Applied To:** Gojo (Contributor), Six Eyes (Reviewer), Sukuna (Observer)  
+**Applied To:** Blogger (Overseer), Gojo (Contributor), Sukuna (Validator)  
 
 Our agents will factor this rule into all background scans, issue validations, and bidding decisions.`;
       trace.push({
@@ -313,10 +313,10 @@ Respond in authoritative, helpful Markdown format. The very first sentence shoul
   } {
     return {
       boardHealth: 'optimal',
-      summary: 'All 3 agents (Blogger, Gojo, Six Eyes) are operating within verified Ziki Rule 1 and Independence Firewall boundaries. Fast validation race strategy active.',
+      summary: 'All 3 agents (Blogger, Gojo, Sukuna) are operating within verified Ziki Rule 1 and Independence Firewall boundaries. Fast validation race strategy active.',
       actionItems: [
         'Issue #1042 (reception layout draft toast) ready for your 1-tap approval.',
-        'Six Eyes actively monitoring for incoming 60s PR review dispatch offers (+10 pts).',
+        'Sukuna actively monitoring for incoming 60s PR review dispatch offers (+10 pts).',
         'Heartbeat Sentinel auto-keepalive is enabled (15m window safe).',
         'Ziki 500-point sprint target is at 77% (385/500 pts).',
       ],

@@ -93,14 +93,14 @@ A person/owner can hold at most 2 active claims simultaneously. Silence drops oc
   {
     id: 'ziki-independence-firewall',
     category: 'ziki',
-    keywords: ['independence', 'firewall', 'collusion', 'six eyes', 'gojo', 'sukuna', 'conflict of interest'],
+    keywords: ['independence', 'firewall', 'collusion', 'gojo', 'sukuna', 'conflict of interest'],
     title: 'Independence Firewall: Enforced by Owner',
-    summary: 'Integrity checks are by OWNER, not agent. Because Gojo and Six Eyes share one owner, Six Eyes can NEVER review or validate Gojo\'s tickets.',
+    summary: 'Integrity checks are by OWNER, not agent. Because Gojo and Sukuna share one owner, Sukuna can NEVER review or validate Gojo\'s tickets.',
     detailedText: `Ziki strictly prevents collusion and self-dealing:
 
 "A second agent of the same person cannot validate, set severity, or mark a fix good to merge on a ticket that person's agents filed or claimed."
 
-Because Gojo and Six Eyes share the same owner, Six Eyes can never review Gojo's pull requests or validate Gojo's issues. Six Eyes focuses exclusively on external teams' tickets to protect against 403 Collusion Penalties.`,
+Because Gojo and Sukuna share the same owner, Sukuna can never review Gojo's pull requests or validate Gojo's issues. Sukuna focuses exclusively on external teams' tickets to protect against 403 Collusion Penalties.`,
     codeSnippet: `// CLI enforces independence check:
 // assertIndependent(ticket.ownerId !== myOwnerId)`,
   },
@@ -114,7 +114,7 @@ Because Gojo and Six Eyes share the same owner, Six Eyes can never review Gojo's
 
 • Offers WITH a pullRequestUrl: These are PR review tasks! They pay up to 10 points immediately upon test verdict and do NOT require repository write access. Accept these immediately!
 • Offers WITHOUT a pullRequestUrl: These are solver claims. Do NOT accept unless you have confirmed GitHub repository push access, or the claim will expire and incur a silence penalty.`,
-    codeSnippet: 'node ~/.ziki/bin/ziki.mjs inbox --unread --agent six-eyes',
+    codeSnippet: 'node ~/.ziki/bin/ziki.mjs inbox --unread --agent sukuna',
     suggestedAction: {
       type: 'approve_offer',
       label: 'Accept Active 60s PR Review (+10 pts)',
@@ -293,7 +293,7 @@ robust_planner = LoopAgent(name="RobustPlanner", sub_agents=[planner, checker], 
     detailedText: `Team Neo (neo-mando) operates across:
 • Target Product: zedu-fe / 3D Virtual Office ("The Tower").
 • Contributors Helper: Project #7 led by @TrippleA001, completed 9 cohort call transcripts collection (Task #7 by Only1mjay).
-• Roster: Blogger (Lead/Overseer), Gojo (Contributor / Solver), Six Eyes (Reviewer / Validator), Sukuna (Observer).`,
+• Roster: Blogger (Lead/Overseer), Gojo (Frontend & 3D Office Specialist), Sukuna (Mobile & Chaos Testing Lead).`,
   },
 ];
 

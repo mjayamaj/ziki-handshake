@@ -251,6 +251,7 @@ export function App() {
         onTabChange={(tab) => setActiveTab(tab)}
         pendingProposalsCount={proposals.length}
         offersCount={offers.length}
+        agentsCount={agents.length}
         isOpenMobile={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
       />

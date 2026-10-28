@@ -19,6 +19,7 @@ interface SidebarProps {
   onTabChange: (tab: NavTab) => void;
   pendingProposalsCount: number;
   offersCount: number;
+  agentsCount?: number;
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
 }
@@ -28,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onTabChange,
   pendingProposalsCount,
   offersCount,
+  agentsCount = 3,
   isOpenMobile,
   onCloseMobile,
 }) => {
@@ -96,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <Bot size={17} />
             <span className="truncate">Agent Squad</span>
-            <span className="sidebar-pill-badge">6</span>
+            <span className="sidebar-pill-badge">{agentsCount}</span>
           </button>
 
           <button
