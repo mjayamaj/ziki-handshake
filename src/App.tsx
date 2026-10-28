@@ -1,81 +1,74 @@
 import { useState } from 'react';
 import './App.css';
+import { Sidebar, type NavTab } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
+import { AgentRoster } from './components/AgentRoster';
 import { ActionDeck } from './components/ActionDeck';
 import { OfferRadar } from './components/OfferRadar';
-import { AgentRoster } from './components/AgentRoster';
-import { ClaimSentinel } from './components/ClaimSentinel';
-import { StandingInstructions } from './components/StandingInstructions';
 import { AuditLedger } from './components/AuditLedger';
 import { ClarificationModal } from './components/ClarificationModal';
+import { AgentDetailModal } from './components/AgentDetailModal';
 import { HumaneCommLink } from './components/HumaneCommLink';
+import { StandingInstructions } from './components/StandingInstructions';
 import { VoiceEngine } from './services/voiceEngine';
 
 import {
   INITIAL_AGENTS,
   INITIAL_OFFERS,
   INITIAL_PROPOSALS,
-  INITIAL_CLAIMS,
   INITIAL_LEDGER,
   INITIAL_INSTRUCTIONS,
 } from './data/mockZiki';
 
-import type { DispatchOffer, ActionProposal, ActiveClaim, LedgerEntry, StandingInstruction, AgentInfo } from './types';
-
-type DashboardTab = 'proposals' | 'offers' | 'blogger' | 'team' | 'ledger';
+import type {
+  DispatchOffer,
+  ActionProposal,
+  LedgerEntry,
+  AgentInfo,
+  StandingInstruction,
+} from './types';
 
 export function App() {
   const [agents, setAgents] = useState<AgentInfo[]>(INITIAL_AGENTS);
   const [offers, setOffers] = useState<DispatchOffer[]>(INITIAL_OFFERS);
   const [proposals, setProposals] = useState<ActionProposal[]>(INITIAL_PROPOSALS);
-  const [claims, setClaims] = useState<ActiveClaim[]>(INITIAL_CLAIMS);
   const [ledger, setLedger] = useState<LedgerEntry[]>(INITIAL_LEDGER);
   const [instructions, setInstructions] = useState<StandingInstruction[]>(INITIAL_INSTRUCTIONS);
-  const [totalPoints, setTotalPoints] = useState<number>(385);
+  const [totalPoints, setTotalPoints] = useState<number>(425);
   const targetPoints = 500;
 
-  const [activeTab, setActiveTab] = useState<DashboardTab>('proposals');
+  const [activeTab, setActiveTab] = useState<NavTab>('roster');
+  const [selectedAgent, setSelectedAgent] = useState<AgentInfo | null>(null);
   const [clarifyingProposal, setClarifyingProposal] = useState<ActionProposal | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const showToast = (msg: string) => {
     setNotification(msg);
     setTimeout(() => {
       setNotification(null);
-    }, 3500);
+    }, 4000);
   };
 
-  // Handshake Action 1: Approve Proposal
+  // Handshake 1: Approve Proposal
   const handleApproveProposal = (proposal: ActionProposal) => {
     setProposals((prev) => prev.filter((p) => p.id !== proposal.id));
     setTotalPoints((prev) => prev + proposal.pointsReward);
 
     setAgents((prev) =>
       prev.map((agent) => {
-        if (agent.id === proposal.agentId) {
+        if (agent.id === proposal.agentId || agent.name.toLowerCase() === proposal.agentName.toLowerCase()) {
           return {
             ...agent,
+            tasksCompleted: agent.tasksCompleted + 1,
+            tasksPending: Math.max(0, agent.tasksPending - 1),
             pointsEarned: agent.pointsEarned + proposal.pointsReward,
-            activeClaims: proposal.category === 'bid' ? agent.activeClaims + 1 : agent.activeClaims,
+            lastActive: 'Just now',
           };
         }
         return agent;
       })
     );
-
-    if (proposal.category === 'bid') {
-      const newClaim: ActiveClaim = {
-        id: `claim-${proposal.issueId}`,
-        issueId: proposal.issueId,
-        title: proposal.title,
-        repo: proposal.repo,
-        agentName: proposal.agentName,
-        branchName: `fix/${proposal.issueId}-${proposal.agentName.toLowerCase()}`,
-        heartbeatMinutesLeft: 15,
-        totalTimeMinutes: 15,
-      };
-      setClaims((prev) => [newClaim, ...prev]);
-    }
 
     const now = new Date();
     const timeStr = now.toTimeString().split(' ')[0];
@@ -83,7 +76,7 @@ export function App() {
       id: `tx-${Date.now()}`,
       timestamp: timeStr,
       agentName: proposal.agentName,
-      action: `${proposal.category === 'bid' ? 'Bid Awarded' : 'Validation Confirmed'}: #${proposal.issueId} (${proposal.title})`,
+      action: `Handshake approved on #${proposal.issueId} (${proposal.title})`,
       issueId: proposal.issueId,
       points: proposal.pointsReward,
       status: 'credited',
@@ -93,19 +86,27 @@ export function App() {
     showToast(`Approved ${proposal.agentName}'s plan on #${proposal.issueId}! +${proposal.pointsReward} pts credited.`);
   };
 
-  // Handshake Action 2: Reject Proposal
+  // Handshake 2: Reject Proposal
   const handleRejectProposal = (id: string) => {
     setProposals((prev) => prev.filter((p) => p.id !== id));
     showToast('Proposal declined. Agent released back to scanning queue.');
   };
 
-  // Handshake Action 3: Accept 60s Offer
+  // Handshake 3: Accept 60s Offer
   const handleAcceptOffer = (offer: DispatchOffer) => {
     setOffers((prev) => prev.filter((o) => o.id !== offer.id));
     setTotalPoints((prev) => prev + offer.points);
 
     setAgents((prev) =>
-      prev.map((a) => (a.id === 'six-eyes' ? { ...a, pointsEarned: a.pointsEarned + offer.points } : a))
+      prev.map((a) =>
+        a.id === 'gojo'
+          ? {
+              ...a,
+              pointsEarned: a.pointsEarned + offer.points,
+              tasksCompleted: a.tasksCompleted + 1,
+            }
+          : a
+      )
     );
 
     const now = new Date();
@@ -113,8 +114,8 @@ export function App() {
     const newEntry: LedgerEntry = {
       id: `tx-${Date.now()}`,
       timestamp: timeStr,
-      agentName: 'Six Eyes',
-      action: `PR Review sign-off on Issue #${offer.issueId}`,
+      agentName: 'Gojo',
+      action: `Fast PR Review sign-off on Issue #${offer.issueId}`,
       issueId: offer.issueId,
       points: offer.points,
       status: 'credited',
@@ -127,6 +128,60 @@ export function App() {
   const handleDeclineOffer = (offerId: string) => {
     setOffers((prev) => prev.filter((o) => o.id !== offerId));
     showToast('Offer declined. Released back to community pool.');
+  };
+
+  // Toggle Agent Active / Paused Status
+  const handleToggleAgentStatus = (agentId: string) => {
+    setAgents((prev) =>
+      prev.map((a) => {
+        if (a.id === agentId) {
+          const newStatus = a.status === 'active' ? 'paused' : 'active';
+          showToast(`${a.name} is now ${newStatus === 'active' ? 'Active' : 'Off-Duty'}.`);
+          return {
+            ...a,
+            status: newStatus,
+            colorTheme: {
+              ...a.colorTheme,
+              dot: newStatus === 'active' ? '#10b981' : '#94a3b8',
+            },
+          };
+        }
+        return a;
+      })
+    );
+
+    if (selectedAgent && selectedAgent.id === agentId) {
+      setSelectedAgent((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: prev.status === 'active' ? 'paused' : 'active',
+              colorTheme: {
+                ...prev.colorTheme,
+                dot: prev.status === 'active' ? '#94a3b8' : '#10b981',
+              },
+            }
+          : null
+      );
+    }
+  };
+
+  // Toggle Standing Instruction
+  const handleToggleInstruction = (id: string) => {
+    setInstructions((prev) =>
+      prev.map((inst) => (inst.id === id ? { ...inst, active: !inst.active } : inst))
+    );
+  };
+
+  const handleAddInstruction = (text: string) => {
+    const newInst: StandingInstruction = {
+      id: `inst-${Date.now()}`,
+      text,
+      category: 'rule',
+      active: true,
+    };
+    setInstructions((prev) => [...prev, newInst]);
+    showToast(`Firewall rule registered: "${text}"`);
   };
 
   // Simulate an incoming dispatch offer
@@ -142,170 +197,130 @@ export function App() {
       secondsRemaining: 60,
       writeAccessRequired: false,
       pullRequestUrl: `https://github.com/zedu-team-neo-mando/zedu-be/pull/${randomId - 600}`,
-      notes: 'Blogger spotted an open PR review offer. Zero write access needed.',
+      notes: 'Six Eyes spotted an open PR review offer. Zero write access needed.',
+      friendlyExplanation: 'A teammate opened a pull request for the WebSocket upgrade handshake. Safe review opportunity with zero write access.',
     };
 
     setOffers((prev) => [newOffer, ...prev]);
     setActiveTab('offers');
     showToast(`Incoming 60s Dispatch Offer on #${randomId}!`);
-    VoiceEngine.speak(`Attention supervisor: a new sixty-second dispatch offer arrived for issue ${randomId}. Claim it before the timer expires!`, 'Blogger');
-  };
-
-  const handleToggleInstruction = (id: string) => {
-    setInstructions((prev) =>
-      prev.map((inst) => (inst.id === id ? { ...inst, active: !inst.active } : inst))
+    VoiceEngine.speak(
+      `Attention supervisor: a new sixty-second dispatch offer arrived for issue ${randomId}. Claim it before the timer expires!`,
+      'Blogger'
     );
   };
 
-  const handleAddInstruction = (text: string) => {
-    const newInst: StandingInstruction = {
-      id: `inst-${Date.now()}`,
-      text,
-      category: 'filter',
-      active: true,
-    };
-    setInstructions((prev) => [...prev, newInst]);
-    showToast(`Standing rule active: "${text}"`);
-  };
-
-  const handleManualHeartbeat = (claimId: string) => {
-    setClaims((prev) =>
-      prev.map((c) => (c.id === claimId ? { ...c, heartbeatMinutesLeft: 15 } : c))
-    );
-    showToast('Heartbeat ping sent to Ziki. Claim timer refreshed to 15m.');
-  };
-
+  // Reset to initial demo defaults
   const handleReset = () => {
     setAgents(INITIAL_AGENTS);
     setOffers(INITIAL_OFFERS);
     setProposals(INITIAL_PROPOSALS);
-    setClaims(INITIAL_CLAIMS);
     setLedger(INITIAL_LEDGER);
     setInstructions(INITIAL_INSTRUCTIONS);
-    setTotalPoints(385);
-    setActiveTab('proposals');
-    showToast('Board state reset to initial demo defaults.');
+    setTotalPoints(425);
+    setActiveTab('roster');
+    setSelectedAgent(null);
+    setClarifyingProposal(null);
+    showToast('Reset Ziki Handshake state to defaults.');
   };
 
-  const handleVoiceAction = (actionType: 'approve_1042' | 'approve_offer' | 'custom', text: string) => {
-    if (actionType === 'approve_1042') {
-      const prop1042 = proposals.find((p) => p.issueId === 1042);
-      if (prop1042) {
-        handleApproveProposal(prop1042);
-      } else {
-        showToast('Issue #1042 is already approved or not in pending queue.');
-      }
-    } else if (actionType === 'approve_offer') {
-      if (offers.length > 0) {
-        handleAcceptOffer(offers[0]);
-      } else {
-        showToast('No active dispatch offers to claim right now.');
-      }
-    } else {
-      handleAddInstruction(text);
+  const getActiveTabTitle = () => {
+    switch (activeTab) {
+      case 'roster':
+        return 'Agent Squad';
+      case 'handshake':
+        return 'Handshake Feed';
+      case 'offers':
+        return '60s Offer Radar';
+      case 'ledger':
+        return 'Verified Ledger';
+      case 'copilot':
+        return 'Blogger Copilot';
+      case 'rules':
+        return 'Safety Firewall';
+      default:
+        return 'Squad';
     }
   };
 
   return (
-    <div className="app-container">
-      {/* 1. Standard Top Navbar */}
-      <Navbar
-        totalPoints={totalPoints}
-        targetPoints={targetPoints}
-        onSimulateOffer={handleSimulateOffer}
-        onReset={handleReset}
+    <div className="agents-app">
+      {/* 1. Sleek Dark Sidebar with Ziki Handshake identity */}
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab)}
+        pendingProposalsCount={proposals.length}
+        offersCount={offers.length}
+        isOpenMobile={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
 
-      {/* 2. Standard View Selector Tabs */}
-      <nav className="dashboard-subnav" aria-label="Dashboard views">
-        <div className="dashboard-subnav-inner">
-          <div className="tab-list">
-            <button
-              onClick={() => setActiveTab('proposals')}
-              className={`tab-btn ${activeTab === 'proposals' ? 'active' : ''}`}
-            >
-              <span>⚡ Action Feed</span>
-              <span className={`tab-badge ${proposals.length > 0 ? 'tab-badge-blue' : 'tab-badge-muted'}`}>
-                {proposals.length}
-              </span>
-            </button>
+      {/* 2. Main Content Column */}
+      <div className="agents-main-column">
+        {/* Top Header Bar */}
+        <Navbar
+          totalPoints={totalPoints}
+          targetPoints={targetPoints}
+          onSimulateOffer={handleSimulateOffer}
+          onReset={handleReset}
+          activeTabName={getActiveTabTitle()}
+          onToggleMobileMenu={() => setIsMobileMenuOpen((prev) => !prev)}
+        />
 
-            <button
-              onClick={() => setActiveTab('offers')}
-              className={`tab-btn ${activeTab === 'offers' ? 'active' : ''}`}
-            >
-              <span>📡 60s Offer Radar</span>
-              <span className={`tab-badge ${offers.length > 0 ? 'tab-badge-emerald' : 'tab-badge-muted'}`}>
-                {offers.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('blogger')}
-              className={`tab-btn ${activeTab === 'blogger' ? 'active' : ''}`}
-            >
-              <span>🤖 Blogger Copilot</span>
-              <span className="tab-badge tab-badge-muted">AI</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('team')}
-              className={`tab-btn ${activeTab === 'team' ? 'active' : ''}`}
-            >
-              <span>👥 Agent Team & Sentinel</span>
-              <span className="tab-badge tab-badge-muted">{agents.length}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('ledger')}
-              className={`tab-btn ${activeTab === 'ledger' ? 'active' : ''}`}
-            >
-              <span>📜 Reward Ledger</span>
-              <span className="tab-badge tab-badge-muted">{ledger.length}</span>
-            </button>
+        {/* Toast Notification */}
+        {notification && (
+          <div
+            className="animate-slide-down"
+            style={{
+              position: 'fixed',
+              bottom: '24px',
+              right: '24px',
+              maxWidth: '420px',
+              background: '#0f172a',
+              color: '#ffffff',
+              padding: '12px 18px',
+              borderRadius: '12px',
+              fontSize: '13px',
+              fontWeight: 600,
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.35)',
+              zIndex: 70,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+            role="status"
+            aria-live="polite"
+          >
+            <span
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: '#3b82f6',
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ flex: 1 }}>{notification}</span>
           </div>
-        </div>
-      </nav>
+        )}
 
-      {/* Toast Notification */}
-      {notification && (
-        <div
-          className="animate-slide-down"
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '20px',
-            left: '20px',
-            maxWidth: '420px',
-            margin: '0 auto',
-            background: '#0f172a',
-            color: '#ffffff',
-            padding: '12px 18px',
-            borderRadius: '12px',
-            fontSize: '13px',
-            fontWeight: 600,
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
-            zIndex: 70,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-          }}
-          role="status"
-          aria-live="polite"
-        >
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6', flexShrink: 0 }} />
-          <span style={{ flex: 1 }}>{notification}</span>
-        </div>
-      )}
+        {/* Main View Area */}
+        <main className="agents-content-container">
+          {/* TAB 1: AGENT ROSTER */}
+          {activeTab === 'roster' && (
+            <AgentRoster
+              agents={agents}
+              onSelectAgent={(agent) => setSelectedAgent(agent)}
+              onGoToHandshake={() => setActiveTab('handshake')}
+              pendingProposalsCount={proposals.length}
+            />
+          )}
 
-      {/* Main Container Content based on Tab */}
-      <main className="dashboard-main">
-        {activeTab === 'proposals' && (
-          <div className="dashboard-grid">
-            {/* Primary Column: Action Proposals & Active Offers */}
+          {/* TAB 2: HANDSHAKE FEED (Human Friendly Approvals) */}
+          {activeTab === 'handshake' && (
             <div>
               {offers.length > 0 && (
-                <div style={{ marginBottom: '16px' }}>
+                <div style={{ marginBottom: '20px' }}>
                   <OfferRadar
                     offers={offers}
                     onAccept={handleAcceptOffer}
@@ -321,95 +336,108 @@ export function App() {
                 onAskAgent={(p) => setClarifyingProposal(p)}
               />
             </div>
+          )}
 
-            {/* Sidebar Column: Blogger AI Copilot & Sentinel */}
-            <div className="sidebar-column">
-              <HumaneCommLink
-                onInstructionReceived={handleAddInstruction}
-                onVoiceAction={handleVoiceAction}
-              />
-
-              <ClaimSentinel
-                claims={claims}
-                onManualHeartbeat={handleManualHeartbeat}
-              />
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'offers' && (
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
-                Live 60-Second Dispatch Offers
-              </h2>
-              <p style={{ fontSize: '13px', color: '#64748b' }}>
-                Fast validation race offers. Solver claims require write access; PR reviews are zero-risk signoffs.
-              </p>
-            </div>
-
-            {offers.length === 0 ? (
-              <div
-                style={{
-                  background: '#ffffff',
-                  border: '1px dashed #cbd5e1',
-                  borderRadius: '12px',
-                  padding: '40px 20px',
-                  textAlign: 'center',
-                }}
-              >
-                <p style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a', marginBottom: '8px' }}>
-                  No Active 60s Dispatch Offers
+          {/* TAB 3: 60s OFFER RADAR */}
+          {activeTab === 'offers' && (
+            <div style={{ maxWidth: '840px', margin: '0 auto' }}>
+              <div style={{ marginBottom: '18px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
+                  Live 60-Second Dispatch Offers
+                </h2>
+                <p style={{ fontSize: '13px', color: '#64748b' }}>
+                  Fast race offers spotted by your agents. Review PRs with zero risk to earn instant team points.
                 </p>
-                <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
-                  Blogger is actively monitoring Ziki queues. You can simulate an incoming offer to test.
-                </p>
-                <button onClick={handleSimulateOffer} className="btn-primary">
-                  Simulate Incoming Offer (+10 pts)
-                </button>
               </div>
-            ) : (
-              <OfferRadar
-                offers={offers}
-                onAccept={handleAcceptOffer}
-                onDecline={handleDeclineOffer}
-              />
-            )}
-          </div>
-        )}
 
-        {activeTab === 'blogger' && (
-          <div style={{ maxWidth: '780px', margin: '0 auto' }}>
-            <HumaneCommLink
-              onInstructionReceived={handleAddInstruction}
-              onVoiceAction={handleVoiceAction}
-            />
-          </div>
-        )}
+              {offers.length === 0 ? (
+                <div className="empty-state-card">
+                  <h3 className="empty-state-title">
+                    No Active 60s Dispatch Offers
+                  </h3>
+                  <p className="empty-state-desc">
+                    Agents are actively scanning the Ziki repository queues. You can simulate an incoming offer right now.
+                  </p>
+                  <button
+                    onClick={handleSimulateOffer}
+                    className="banner-action-btn"
+                    style={{ margin: '16px auto 0 auto' }}
+                  >
+                    Simulate Incoming Offer (+10 pts)
+                  </button>
+                </div>
+              ) : (
+                <OfferRadar
+                  offers={offers}
+                  onAccept={handleAcceptOffer}
+                  onDecline={handleDeclineOffer}
+                />
+              )}
+            </div>
+          )}
 
-        {activeTab === 'team' && (
-          <div className="dashboard-grid">
-            <AgentRoster agents={agents} />
-            <div className="sidebar-column">
-              <ClaimSentinel
-                claims={claims}
-                onManualHeartbeat={handleManualHeartbeat}
+          {/* TAB 4: REWARD LEDGER */}
+          {activeTab === 'ledger' && (
+            <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+              <AuditLedger entries={ledger} />
+            </div>
+          )}
+
+          {/* TAB 5: BLOGGER COPILOT */}
+          {activeTab === 'copilot' && (
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+              <HumaneCommLink
+                onInstructionReceived={(text) => {
+                  handleAddInstruction(text);
+                }}
+                onVoiceAction={(actionType, text) => {
+                  if (actionType === 'approve_1042') {
+                    const p = proposals.find((x) => x.issueId === 1042);
+                    if (p) handleApproveProposal(p);
+                    else showToast('Issue #1042 is already resolved!');
+                  } else if (actionType === 'approve_offer' && offers.length > 0) {
+                    handleAcceptOffer(offers[0]);
+                  } else {
+                    showToast(`Voice command received: "${text}"`);
+                  }
+                }}
               />
+            </div>
+          )}
+
+          {/* TAB 6: SAFETY FIREWALL & RULES */}
+          {activeTab === 'rules' && (
+            <div style={{ maxWidth: '840px', margin: '0 auto' }}>
+              <div style={{ marginBottom: '18px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>
+                  Safety Firewall &amp; Standing Guardrails
+                </h2>
+                <p style={{ fontSize: '13px', color: '#64748b' }}>
+                  Active safety policies governing autonomous agents. Toggle rules or register new instructions in plain English.
+                </p>
+              </div>
+
               <StandingInstructions
                 instructions={instructions}
                 onToggle={handleToggleInstruction}
                 onAdd={handleAddInstruction}
               />
             </div>
-          </div>
-        )}
+          )}
+        </main>
+      </div>
 
-        {activeTab === 'ledger' && (
-          <div style={{ maxWidth: '860px', margin: '0 auto' }}>
-            <AuditLedger entries={ledger} />
-          </div>
-        )}
-      </main>
+      {/* Agent Detail Modal (Inspect performance gaps & queue) */}
+      {selectedAgent && (
+        <AgentDetailModal
+          agent={selectedAgent}
+          onClose={() => setSelectedAgent(null)}
+          onToggleStatus={handleToggleAgentStatus}
+          pendingProposals={proposals}
+          onApproveProposal={handleApproveProposal}
+          onAskAgent={(p) => setClarifyingProposal(p)}
+        />
+      )}
 
       {/* Clarification Q&A Modal */}
       {clarifyingProposal && (

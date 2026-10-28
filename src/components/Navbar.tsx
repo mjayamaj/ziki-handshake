@@ -1,11 +1,20 @@
-import React, { useState } from 'react';
-import { ShieldCheck, RefreshCw, Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import React from 'react';
+import {
+  ChevronRight,
+  ShieldCheck,
+  Zap,
+  RefreshCw,
+  Menu,
+  Activity,
+} from 'lucide-react';
 
 interface NavbarProps {
   totalPoints: number;
   targetPoints: number;
   onSimulateOffer: () => void;
   onReset: () => void;
+  activeTabName: string;
+  onToggleMobileMenu?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -13,100 +22,93 @@ export const Navbar: React.FC<NavbarProps> = ({
   targetPoints,
   onSimulateOffer,
   onReset,
+  activeTabName,
+  onToggleMobileMenu,
 }) => {
   const percent = Math.min(100, Math.round((totalPoints / targetPoints) * 100));
-  const [showSandbox, setShowSandbox] = useState(false);
 
   return (
-    <header className="navbar-header" role="banner">
-      <div className="navbar-inner">
-        {/* Left: Brand & Team */}
-        <div className="navbar-brand-group">
-          <div className="navbar-logo" aria-hidden="true">
-            Z
-          </div>
-          <div className="navbar-title-group">
-            <div className="navbar-title-row">
-              <h1 className="navbar-title">Ziki Handshake</h1>
-              <span className="navbar-team-badge">
-                <span className="navbar-team-dot" />
-                neo-mando
-              </span>
-            </div>
-            <p className="navbar-subtitle">Human-in-the-Loop Mission Control</p>
-          </div>
+    <header className="agents-topbar" role="banner">
+      {/* Left: Mobile Toggle & Breadcrumb */}
+      <div className="topbar-left">
+        {onToggleMobileMenu && (
+          <button
+            type="button"
+            onClick={onToggleMobileMenu}
+            className="mobile-menu-trigger"
+            aria-label="Toggle navigation menu"
+          >
+            <Menu size={18} />
+          </button>
+        )}
+
+        <div className="topbar-brand-icon-small">
+          <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="2" width="24" height="24" rx="7" fill="#1e293b" />
+            <path d="M7 10L14 7L21 10L14 13L7 10Z" fill="#3b82f6" />
+            <path d="M7 14L14 17L21 14" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" />
+          </svg>
         </div>
 
-        {/* Center: Sprint Goal Progress Pulse */}
-        <div className="navbar-center" role="region" aria-label="Sprint progress">
-          <div className="navbar-sprint-info">
-            <span className="navbar-sprint-label">Sprint Goal</span>
-            <span className="navbar-sprint-score">
-              <strong>{totalPoints}</strong> / {targetPoints} pts
-            </span>
-          </div>
-          <div className="navbar-progress-track">
-            <div
-              className="navbar-progress-fill"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-          <span className="navbar-sprint-percent">{percent}%</span>
-        </div>
+        <nav className="topbar-breadcrumb" aria-label="Breadcrumb">
+          <span className="breadcrumb-root">Zedu Hub</span>
+          <ChevronRight size={14} className="breadcrumb-sep" />
+          <span className="breadcrumb-current">{activeTabName}</span>
+        </nav>
+      </div>
 
-        {/* Right: Security & Human Controls */}
-        <div className="navbar-actions">
-          <div
-            className="navbar-safe-badge"
-            title="All agent actions require your explicit confirmation before code changes or rewards are issued"
-          >
-            <ShieldCheck size={14} />
-            <span>Guaranteed Safe</span>
+      {/* Center: Live Sprint Velocity / Points Meter */}
+      <div className="topbar-center">
+        <div className="topbar-points-pill" title="Sprint points earned through human-approved agent proposals">
+          <span className="points-label">Sprint 14:</span>
+          <span className="points-current">{totalPoints}</span>
+          <span className="points-target">/ {targetPoints} pts</span>
+          <div className="points-track">
+            <div className="points-bar" style={{ width: `${percent}%` }} />
           </div>
-
-          <button
-            onClick={() => setShowSandbox((prev) => !prev)}
-            className="btn-secondary navbar-btn"
-            aria-expanded={showSandbox}
-            aria-label="Toggle demo simulator tools"
-          >
-            <Zap size={14} />
-            <span>Demo Tools</span>
-            {showSandbox ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-          </button>
-
-          <button
-            onClick={onReset}
-            className="btn-ghost navbar-btn"
-            title="Reset board state to initial defaults"
-            aria-label="Reset board state"
-          >
-            <RefreshCw size={13} />
-            <span>Reset</span>
-          </button>
+          <span className="points-pct">{percent}%</span>
         </div>
       </div>
 
-      {/* Collapsible Sandbox Drawer */}
-      {showSandbox && (
-        <div className="navbar-sandbox-drawer animate-slide-down">
-          <div style={{ fontSize: '12px', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Zap size={14} color="#2563eb" />
-            <span><strong>Simulator:</strong> Dispatch a simulated 60s PR review ticket to test agent background claims.</span>
-          </div>
-          <button
-            onClick={() => {
-              onSimulateOffer();
-              setShowSandbox(false);
-            }}
-            className="btn-primary"
-            style={{ fontSize: '12px', padding: '6px 14px', minHeight: '34px' }}
-          >
-            <Zap size={13} />
-            <span>Simulate Incoming PR Offer (+10 pts)</span>
-          </button>
+      {/* Right: Security & Demo Actions */}
+      <div className="topbar-right">
+        {/* Human Safe Handshake Badge */}
+        <div
+          className="topbar-safe-badge"
+          title="Zero-Trust Guarantee: Autonomous code execution requires human confirmation"
+        >
+          <ShieldCheck size={14} className="text-emerald-600" />
+          <span>Handshake Enforced</span>
         </div>
-      )}
+
+        {/* Demo Simulator Trigger */}
+        <button
+          type="button"
+          onClick={onSimulateOffer}
+          className="topbar-action-btn btn-sim"
+          title="Simulate an incoming 60s fast validation offer from an agent"
+        >
+          <Zap size={13} />
+          <span className="hidden-mobile">Simulate Offer</span>
+        </button>
+
+        {/* Reset */}
+        <button
+          type="button"
+          onClick={onReset}
+          className="topbar-action-btn"
+          title="Reset board state back to defaults"
+        >
+          <RefreshCw size={13} />
+          <span className="hidden-mobile">Reset</span>
+        </button>
+
+        {/* Live Status indicator */}
+        <div className="topbar-live-indicator hidden-mobile" title="Autonomous monitoring active">
+          <Activity size={13} className="text-emerald-600" />
+          <span>Live Sentinel</span>
+        </div>
+      </div>
     </header>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { DispatchOffer } from '../types';
-import { Timer, CheckCircle, ArrowUpRight } from 'lucide-react';
+import { Timer, CheckCircle, ArrowUpRight, ShieldCheck, Zap } from 'lucide-react';
 
 interface OfferRadarProps {
   offers: DispatchOffer[];
@@ -12,7 +12,7 @@ export const OfferRadar: React.FC<OfferRadarProps> = ({ offers, onAccept, onDecl
   if (offers.length === 0) return null;
 
   return (
-    <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div className="offer-radar-list">
       {offers.map((offer) => (
         <SingleOfferCard
           key={offer.id}
@@ -30,7 +30,6 @@ const SingleOfferCard: React.FC<{
   onAccept: () => void;
   onDecline: () => void;
 }> = ({ offer, onAccept, onDecline }) => {
-  // Initialized from offer.secondsRemaining, component remounts on key change
   const [timeLeft, setTimeLeft] = useState(offer.secondsRemaining);
 
   useEffect(() => {
@@ -48,177 +47,87 @@ const SingleOfferCard: React.FC<{
   const isUrgent = timeLeft < 15;
 
   return (
-    <div
-      className="animate-slide-down"
-      style={{
-        background: '#ffffff',
-        border: isUrgent ? '1.5px solid #ef4444' : '1.5px solid #bfdbfe',
-        borderRadius: '14px',
-        padding: '18px 22px',
-        boxShadow: isUrgent
-          ? '0 4px 14px rgba(239, 68, 68, 0.12)'
-          : '0 4px 14px rgba(37, 99, 235, 0.08)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
+    <div className={`offer-radar-card animate-slide-down ${isUrgent ? 'urgent' : ''}`}>
       {/* Top Countdown Bar */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '4px',
-          background: '#f1f5f9',
-        }}
-      >
+      <div className="offer-countdown-bar-track">
         <div
-          style={{
-            height: '100%',
-            width: `${percentLeft}%`,
-            background: isUrgent ? '#ef4444' : '#2563eb',
-            transition: 'width 1s linear',
-          }}
+          className={`offer-countdown-bar-fill ${isUrgent ? 'urgent' : ''}`}
+          style={{ width: `${percentLeft}%` }}
         />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px' }}>
-        {/* Left: Info */}
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <span
-              style={{
-                background: '#eff6ff',
-                color: '#2563eb',
-                fontSize: '11px',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                padding: '3px 8px',
-                borderRadius: '6px',
-                letterSpacing: '0.4px',
-              }}
-            >
-              ⚡ 60s Dispatch Offer
+      <div className="offer-content-row">
+        {/* Left Info */}
+        <div className="offer-info-col">
+          <div className="offer-meta-row">
+            <span className="offer-fast-pill">
+              <Zap size={11} />
+              60s Fast Race
             </span>
-            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
+            <span className="text-xs text-slate-500 font-medium">
               Issue #{offer.issueId} • {offer.repo}
             </span>
             {offer.type === 'pr_review' ? (
-              <span
-                style={{
-                  background: '#ecfdf5',
-                  color: '#059669',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: '9999px',
-                  border: '1px solid #a7f3d0',
-                }}
-              >
-                Safe PR Review (No Write Access Needed)
+              <span className="offer-safety-pill safe">
+                <ShieldCheck size={12} />
+                Safe PR Review (Zero Risk)
               </span>
             ) : (
-              <span
-                style={{
-                  background: '#fffbeb',
-                  color: '#b45309',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: '9999px',
-                  border: '1px solid #fde68a',
-                }}
-              >
+              <span className="offer-safety-pill claim">
                 Solver Claim (Requires Write Access)
               </span>
             )}
           </div>
 
-          <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>
+          <h3 className="offer-title">
             {offer.title}
           </h3>
 
-          <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.4, marginBottom: '8px' }}>
-            {offer.notes}
-          </p>
+          {offer.friendlyExplanation ? (
+            <p className="offer-explanation-text">
+              {offer.friendlyExplanation}
+            </p>
+          ) : (
+            <p className="offer-explanation-text">
+              {offer.notes}
+            </p>
+          )}
 
           {offer.pullRequestUrl && (
             <a
               href={offer.pullRequestUrl}
               target="_blank"
               rel="noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '12px',
-                color: '#2563eb',
-                textDecoration: 'none',
-                fontWeight: 600,
-              }}
+              className="offer-pr-link"
             >
-              Inspect Pull Request diff
+              <span>Inspect PR on GitHub</span>
               <ArrowUpRight size={13} />
             </a>
           )}
         </div>
 
-        {/* Right: Timer & 1-Tap Handshake Action */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-          {/* Timer Display */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              color: isUrgent ? '#ef4444' : '#2563eb',
-              fontWeight: 800,
-              fontSize: '14px',
-              background: isUrgent ? '#fef2f2' : '#eff6ff',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              border: isUrgent ? '1px solid #fecaca' : '1px solid #bfdbfe',
-            }}
-          >
-            <Timer size={16} />
+        {/* Right Timer & 1-Tap Claim */}
+        <div className="offer-action-col">
+          <div className={`offer-timer-box ${isUrgent ? 'urgent' : ''}`}>
+            <Timer size={15} />
             <span>{timeLeft}s left</span>
           </div>
 
-          {/* Action Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="flex items-center gap-2">
             <button
               onClick={onDecline}
-              style={{
-                background: '#ffffff',
-                color: '#64748b',
-                border: '1px solid #e2e8f0',
-                padding: '8px 14px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 600,
-              }}
+              className="btn-decline"
+              aria-label="Pass on offer"
             >
               Pass
             </button>
             <button
               onClick={onAccept}
-              style={{
-                background: '#2563eb',
-                color: '#ffffff',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
-              }}
+              className="btn-primary"
+              aria-label="Accept 60s offer"
             >
               <CheckCircle size={15} />
-              <span>Accept Claim (+{offer.points} pts)</span>
+              <span>Claim (+{offer.points} pts)</span>
             </button>
           </div>
         </div>

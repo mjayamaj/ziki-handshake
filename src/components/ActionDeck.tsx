@@ -8,6 +8,8 @@ import {
   FileCode,
   Check,
   ShieldCheck,
+  AlertCircle,
+  Sparkles,
 } from 'lucide-react';
 import { VoiceNotePlayer } from './VoiceNotePlayer';
 
@@ -25,75 +27,49 @@ export const ActionDeck: React.FC<ActionDeckProps> = ({
   onAskAgent,
 }) => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Section Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+    <div className="action-deck-container">
+      {/* Feed Header */}
+      <div className="action-deck-header">
         <div>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span>Action Handshake Feed</span>
-            <span
-              style={{
-                background: '#eff6ff',
-                color: '#2563eb',
-                fontSize: '12px',
-                fontWeight: 700,
-                padding: '2px 8px',
-                borderRadius: '9999px',
-                border: '1px solid #bfdbfe',
-              }}
-            >
-              {proposals.length} awaiting your approval
+          <div className="flex items-center gap-2">
+            <h2 className="action-deck-title">
+              Handshake Approval Feed
+            </h2>
+            <span className="deck-badge-pending">
+              {proposals.length} awaiting your decision
             </span>
-          </h2>
-          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-            Your agents investigate issues and propose solutions. You decide with 1 tap.
+          </div>
+          <p className="action-deck-subtitle">
+            AI agents research problems and prepare minimal, safe solutions. They require your handshake approval before making changes.
           </p>
         </div>
       </div>
 
       {/* Proposals List or Empty State */}
       {proposals.length === 0 ? (
-        <div
-          style={{
-            background: '#ffffff',
-            border: '1px dashed #cbd5e1',
-            borderRadius: '14px',
-            padding: '36px 20px',
-            textAlign: 'center',
-          }}
-        >
-          <div
-            style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '50%',
-              background: '#eff6ff',
-              color: '#2563eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 12px auto',
-            }}
-          >
-            <Check size={22} />
+        <div className="empty-state-card">
+          <div className="empty-state-icon-circle">
+            <Check size={24} />
           </div>
-          <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
-            All Clear — No Pending Proposals
+          <h3 className="empty-state-title">
+            All Clear — No Pending Approvals
           </h3>
-          <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '360px', margin: '0 auto' }}>
-            All agent proposals have been reviewed. Agents are actively scanning and running heartbeats.
+          <p className="empty-state-desc">
+            All agent proposals have been reviewed. Agents are currently monitoring the issue queues and will notify you when new work is ready for review.
           </p>
         </div>
       ) : (
-        proposals.map((proposal) => (
-          <ProposalCard
-            key={proposal.id}
-            proposal={proposal}
-            onApprove={() => onApprove(proposal)}
-            onReject={() => onReject(proposal.id)}
-            onAskAgent={() => onAskAgent(proposal)}
-          />
-        ))
+        <div className="proposals-list">
+          {proposals.map((proposal) => (
+            <ProposalCard
+              key={proposal.id}
+              proposal={proposal}
+              onApprove={() => onApprove(proposal)}
+              onReject={() => onReject(proposal.id)}
+              onAskAgent={() => onAskAgent(proposal)}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
@@ -108,7 +84,7 @@ const ProposalCard: React.FC<{
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca', label: 'Critical Priority' };
+        return { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca', label: 'Critical' };
       case 'high':
         return { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa', label: 'High Priority' };
       case 'medium':
@@ -121,9 +97,9 @@ const ProposalCard: React.FC<{
   const getCategoryTitle = (category: string) => {
     switch (category) {
       case 'bid':
-        return { label: 'Bidding Proposal', color: '#2563eb', bg: '#eff6ff' };
+        return { label: 'Code Fix Bid', color: '#2563eb', bg: '#eff6ff' };
       case 'validate':
-        return { label: 'Issue Validation', color: '#0284c7', bg: '#f0f9ff' };
+        return { label: 'Bug Validation', color: '#0284c7', bg: '#f0f9ff' };
       default:
         return { label: 'PR Review', color: '#059669', bg: '#ecfdf5' };
     }
@@ -134,86 +110,46 @@ const ProposalCard: React.FC<{
 
   return (
     <div className="proposal-card">
-      {/* Top Meta Line */}
+      {/* Top Meta Header */}
       <div className="proposal-meta-top">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* Agent Pill */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: '#f8fafc',
-              padding: '3px 10px',
-              borderRadius: '9999px',
-              border: '1px solid #e2e8f0',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#0f172a',
-            }}
-          >
-            <span
-              style={{
-                width: '7px',
-                height: '7px',
-                borderRadius: '50%',
-                background: '#2563eb',
-              }}
-            />
-            <span>{proposal.agentName}</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Agent Badge */}
+          <div className="proposal-agent-tag">
+            <span className="agent-tag-dot" />
+            <span className="font-semibold">{proposal.agentName}</span>
           </div>
 
           {/* Action category */}
           <span
-            style={{
-              background: categoryStyle.bg,
-              color: categoryStyle.color,
-              fontSize: '11px',
-              fontWeight: 700,
-              padding: '3px 8px',
-              borderRadius: '6px',
-            }}
+            className="proposal-category-pill"
+            style={{ background: categoryStyle.bg, color: categoryStyle.color }}
           >
             {categoryStyle.label}
           </span>
 
-          <span style={{ fontSize: '12px', color: '#64748b' }}>
-            #{proposal.issueId} • {proposal.repo}
+          <span className="text-xs text-slate-500 font-medium">
+            Issue #{proposal.issueId} • {proposal.repo}
           </span>
         </div>
 
-        {/* Right badges */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        {/* Priority & Peer Check */}
+        <div className="flex items-center gap-2 flex-wrap">
           {proposal.independentCheckPassed && (
             <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#059669',
-                background: '#ecfdf5',
-                border: '1px solid #a7f3d0',
-                padding: '2px 8px',
-                borderRadius: '9999px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-              title="Verified by independent firewall rule to prevent collusion"
+              className="peer-verified-tag"
+              title="Verified by independent agent firewall to ensure security and prevent collusion"
             >
               <ShieldCheck size={12} />
-              Peer Verified Safe
+              <span>Safety Verified</span>
             </span>
           )}
 
           <span
+            className="severity-pill"
             style={{
-              fontSize: '11px',
-              fontWeight: 700,
               color: severityStyle.text,
               background: severityStyle.bg,
-              border: `1px solid ${severityStyle.border}`,
-              padding: '2px 8px',
-              borderRadius: '9999px',
+              borderColor: severityStyle.border,
             }}
           >
             {severityStyle.label}
@@ -221,14 +157,43 @@ const ProposalCard: React.FC<{
         </div>
       </div>
 
-      {/* Title */}
-      <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '10px', lineHeight: 1.4 }}>
+      {/* Main Title */}
+      <h3 className="proposal-headline">
         {proposal.title}
       </h3>
 
-      {/* Humane Voice Note Briefing */}
+      {/* Plain English Summary Box */}
+      {proposal.plainEnglishSummary && (
+        <div className="human-explanation-box">
+          <div className="explanation-item">
+            <div className="explanation-label text-rose-700">
+              <AlertCircle size={13} />
+              <span>What's Broken:</span>
+            </div>
+            <p className="explanation-text">{proposal.plainEnglishSummary.theProblem}</p>
+          </div>
+
+          <div className="explanation-item">
+            <div className="explanation-label text-blue-700">
+              <Sparkles size={13} />
+              <span>Agent's Proposed Fix:</span>
+            </div>
+            <p className="explanation-text">{proposal.plainEnglishSummary.theFix}</p>
+          </div>
+
+          <div className="explanation-item">
+            <div className="explanation-label text-emerald-700">
+              <ShieldCheck size={13} />
+              <span>Safety & Risk Assessment:</span>
+            </div>
+            <p className="explanation-text">{proposal.plainEnglishSummary.safetyReason}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Voice Note Briefing */}
       {proposal.voiceMemoText && (
-        <div style={{ marginBottom: '12px' }}>
+        <div className="my-3">
           <VoiceNotePlayer
             agentName={proposal.agentName}
             voiceText={proposal.voiceMemoText}
@@ -237,127 +202,63 @@ const ProposalCard: React.FC<{
         </div>
       )}
 
-      {/* Plan Details & Snippet */}
-      <div
-        style={{
-          background: '#f8fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '12px 14px',
-          marginBottom: '14px',
-        }}
-      >
-        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>
-          Agent Solution & Plan:
+      {/* Technical Plan & Snippet */}
+      <div className="proposal-code-box">
+        <div className="code-box-header">
+          <span>Technical Plan & File Target</span>
         </div>
-        <p style={{ fontSize: '13px', color: '#334155', lineHeight: 1.5, marginBottom: '8px' }}>
-          {proposal.plan}
-        </p>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '11px',
-            color: '#2563eb',
-            background: '#ffffff',
-            padding: '4px 8px',
-            borderRadius: '6px',
-            border: '1px solid #e2e8f0',
-            maxWidth: '100%',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <FileCode size={13} style={{ flexShrink: 0 }} />
-          <code style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{proposal.fileSnippet}</code>
+        <p className="code-plan-text">{proposal.plan}</p>
+        <div className="code-snippet-row">
+          <FileCode size={13} className="text-blue-600 shrink-0" />
+          <code>{proposal.fileSnippet}</code>
         </div>
       </div>
 
-      {/* Bottom Bar: Stats & 1-Tap Buttons */}
+      {/* Footer: Points, ETA, and 1-Tap Buttons */}
       <div className="proposal-footer">
-        {/* Economics & Time */}
         <div className="proposal-stats">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-            <Coins size={15} color="#2563eb" />
+          <div className="stat-points">
+            <Coins size={15} className="text-blue-600" />
             <span>+{proposal.pointsReward} pts reward</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
-            <Clock size={14} />
+          <div className="stat-eta">
+            <Clock size={14} className="text-slate-400" />
             <span>ETA ~{proposal.etaMinutes} mins</span>
           </div>
-          <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+          <span className="text-xs text-slate-400 font-normal">
             {proposal.timestamp}
-          </div>
+          </span>
         </div>
 
-        {/* 1-Tap Decisions */}
+        {/* Action Decision Buttons */}
         <div className="proposal-actions">
           <button
+            type="button"
             onClick={onReject}
-            className="btn-ghost"
-            style={{
-              minHeight: '36px',
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: '1px solid #e2e8f0',
-              background: '#ffffff',
-              color: '#64748b',
-              fontWeight: 600,
-              fontSize: '13px',
-              cursor: 'pointer',
-            }}
-            aria-label={`Decline proposal on #${proposal.issueId}`}
+            className="btn-decline"
+            aria-label={`Decline proposal #${proposal.issueId}`}
           >
             Decline
           </button>
 
           <button
+            type="button"
             onClick={onAskAgent}
-            className="btn-secondary"
-            style={{
-              minHeight: '36px',
-              padding: '6px 14px',
-              borderRadius: '8px',
-              border: '1px solid #bfdbfe',
-              background: '#eff6ff',
-              color: '#2563eb',
-              fontWeight: 600,
-              fontSize: '13px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer',
-            }}
-            aria-label={`Ask ${proposal.agentName} for clarification`}
+            className="btn-ask"
+            aria-label={`Ask ${proposal.agentName} a question`}
           >
             <MessageSquare size={14} />
             <span>Ask {proposal.agentName}</span>
           </button>
 
           <button
+            type="button"
             onClick={onApprove}
-            className="btn-primary"
-            style={{
-              minHeight: '36px',
-              padding: '6px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              background: '#10b981',
-              color: '#ffffff',
-              fontWeight: 700,
-              fontSize: '13px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)',
-            }}
-            aria-label={`Approve and execute plan on #${proposal.issueId}`}
+            className="btn-approve"
+            aria-label={`Approve proposal #${proposal.issueId}`}
           >
             <CheckCircle2 size={15} />
-            <span>Approve & Execute</span>
+            <span>Approve Handshake</span>
           </button>
         </div>
       </div>
