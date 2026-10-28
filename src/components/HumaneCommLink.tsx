@@ -12,7 +12,6 @@ import {
   Pause,
   ShieldCheck,
   Activity,
-  ArrowRight,
   Code2,
   Flame,
   Check,
@@ -54,7 +53,7 @@ function getFormattedTime(): string {
 export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
   onInstructionReceived,
   onVoiceAction,
-  agents,
+  agents: _agents,
   proposals,
   offers: _offers,
   totalPoints,
@@ -485,63 +484,10 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
           </div>
         </div>
 
-        {/* Right Column: Live Fleet Telemetry & Quick Action Deck */}
-        <aside className="copilot-telemetry-panel" aria-label="Live Fleet Telemetry">
-          {/* Telemetry Card 1: 3-Agent Live Fleet Status */}
-          <div className="telemetry-card">
-            <div className="telemetry-card-header">
-              <div className="flex items-center gap-2">
-                <Bot size={16} className="text-blue-400" />
-                <h3 className="telemetry-card-title">AI Fleet Live Telemetry</h3>
-              </div>
-              <span className="telemetry-status-pill">3 Online</span>
-            </div>
-
-            <div className="telemetry-agents-list">
-              {agents.map((agent) => (
-                <div key={agent.id} className="telemetry-agent-item">
-                  <div
-                    className="telemetry-avatar"
-                    style={{
-                      background: agent.colorTheme.bg,
-                      color: agent.colorTheme.text,
-                      borderColor: agent.colorTheme.ring,
-                    }}
-                  >
-                    <span>{agent.initials}</span>
-                    <span
-                      className="status-dot"
-                      style={{ background: agent.colorTheme.dot }}
-                    />
-                  </div>
-
-                  <div className="telemetry-agent-details">
-                    <div className="flex items-center justify-between">
-                      <strong className="agent-name">{agent.name}</strong>
-                      <span className="agent-points font-mono font-bold">{agent.pointsEarned} pts</span>
-                    </div>
-                    <span className="agent-role truncate">{agent.role}</span>
-                    <div className="agent-micro-bar">
-                      <span className="agent-model-chip truncate">{agent.model}</span>
-                      <span className="agent-res-chip">{agent.resolutionRate}% rate</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onNavigateTab('roster')}
-              className="telemetry-footer-link"
-            >
-              <span>Manage AI Fleet Roster</span>
-              <ArrowRight size={13} />
-            </button>
-          </div>
-
-          {/* Telemetry Card 2: 1-Tap Pending Handshake Spotlight */}
-          {pendingProposal && (
+        {/* Right Column: 1-Tap Handshake Spotlight & Sprint Meter */}
+        <aside className="copilot-telemetry-panel" aria-label="Live Fleet Handshake & Metrics">
+          {/* Spotlight Card: 1-Tap Pending Handshake carried to the top */}
+          {pendingProposal ? (
             <div className="telemetry-card spotlight-card">
               <div className="spotlight-header">
                 <span className="spotlight-tag">
@@ -579,6 +525,29 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
                   className="spotlight-inspect-btn"
                 >
                   Inspect Feed
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="telemetry-card spotlight-card">
+              <div className="spotlight-header">
+                <span className="spotlight-tag">
+                  <ShieldCheck size={12} className="text-emerald-500" />
+                  All Handshakes Verified
+                </span>
+              </div>
+              <h4 className="spotlight-issue-title">No Pending Approvals</h4>
+              <p className="spotlight-fix-summary">
+                All agent proposals have been reviewed and approved. Monitoring feeds for new activity.
+              </p>
+              <div className="spotlight-actions">
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab('handshake')}
+                  className="spotlight-inspect-btn"
+                  style={{ width: '100%', textAlign: 'center' }}
+                >
+                  View Verified Ledger
                 </button>
               </div>
             </div>
