@@ -73,7 +73,7 @@ export const AgentRoster: React.FC<AgentRosterProps> = ({
             </span>
           </div>
 
-          <h1 className="roster-title">Autonomous Agent Squad</h1>
+          <h1 className="roster-title">Autonomous AI Fleet</h1>
           <p className="roster-desc">
             Your dedicated AI engineering partners for Zedu Studio. They reproduce bugs, write safe patches, and run independent diagnostics—requiring your 1-tap handshake before anything touches code.
           </p>
@@ -173,11 +173,11 @@ export const AgentRoster: React.FC<AgentRosterProps> = ({
         </div>
       </section>
 
-      {/* 3. Squad Directory Toolbar */}
+      {/* 3. AI Fleet Directory Toolbar */}
       <section className="roster-section" aria-labelledby="agents-heading">
         <div className="roster-toolbar-header">
           <div className="roster-section-title-wrap">
-            <h2 id="agents-heading" className="roster-section-title">Squad Roster &amp; Specializations</h2>
+            <h2 id="agents-heading" className="roster-section-title">Fleet Roster &amp; Specializations</h2>
             <span className="roster-connected-pill">{agents.length} teammates online</span>
           </div>
 

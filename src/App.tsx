@@ -37,7 +37,7 @@ export function App() {
   const [totalPoints, setTotalPoints] = useState<number>(425);
   const targetPoints = 500;
 
-  const [activeTab, setActiveTab] = useState<NavTab>('roster');
+  const [activeTab, setActiveTab] = useState<NavTab>('copilot');
   const [selectedAgent, setSelectedAgent] = useState<AgentInfo | null>(null);
   const [clarifyingProposal, setClarifyingProposal] = useState<ActionProposal | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
@@ -218,7 +218,7 @@ export function App() {
     setLedger(INITIAL_LEDGER);
     setInstructions(INITIAL_INSTRUCTIONS);
     setTotalPoints(425);
-    setActiveTab('roster');
+    setActiveTab('copilot');
     setSelectedAgent(null);
     setClarifyingProposal(null);
     showToast('Reset Ziki Handshake state to defaults.');
@@ -227,7 +227,7 @@ export function App() {
   const getActiveTabTitle = () => {
     switch (activeTab) {
       case 'roster':
-        return 'Agent Squad';
+        return 'AI Fleet';
       case 'handshake':
         return 'Handshake Feed';
       case 'offers':
@@ -239,7 +239,7 @@ export function App() {
       case 'rules':
         return 'Safety Firewall';
       default:
-        return 'Squad';
+        return 'AI Fleet';
     }
   };
 

@@ -89,13 +89,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             type="button"
             onClick={() => {
+              onTabChange('copilot');
+              if (onCloseMobile) onCloseMobile();
+            }}
+            className={`sidebar-nav-btn ${activeTab === 'copilot' ? 'active' : ''}`}
+          >
+            <Sparkles size={17} />
+            <span className="truncate">Blogger Copilot</span>
+            <span className="sidebar-pill-ai">Voice</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
               onTabChange('roster');
               if (onCloseMobile) onCloseMobile();
             }}
             className={`sidebar-nav-btn ${activeTab === 'roster' ? 'active' : ''}`}
           >
             <Bot size={17} />
-            <span className="truncate">Agent Squad</span>
+            <span className="truncate">AI Fleet</span>
             <span className="sidebar-pill-badge">{agentsCount}</span>
           </button>
 
@@ -139,19 +152,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <History size={17} />
             <span className="truncate">Verified Ledger</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              onTabChange('copilot');
-              if (onCloseMobile) onCloseMobile();
-            }}
-            className={`sidebar-nav-btn ${activeTab === 'copilot' ? 'active' : ''}`}
-          >
-            <Sparkles size={17} />
-            <span className="truncate">Blogger Copilot</span>
-            <span className="sidebar-pill-ai">Voice</span>
           </button>
 
           <button
