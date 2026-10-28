@@ -60,16 +60,16 @@ export const AgentRoster: React.FC<AgentRosterProps> = ({
       <div className="roster-header-row">
         <div>
           <div className="roster-badge-group">
-            <span className="roster-subtag">MISSION CONTROL</span>
+            <span className="roster-subtag">Mission Control</span>
             <span className="roster-bullet" aria-hidden="true">•</span>
             <span className="roster-sample-badge">
               <Shield size={11} />
-              ZERO-TRUST MERGE
+              Zero-Trust Protocol
             </span>
             <span className="roster-bullet" aria-hidden="true">•</span>
             <span className="roster-sprint-badge">
               <Sparkles size={11} />
-              SPRINT 14
+              Sprint 14
             </span>
           </div>
 

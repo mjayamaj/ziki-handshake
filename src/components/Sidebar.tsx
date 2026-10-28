@@ -69,7 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </svg>
           </div>
           <span className="sidebar-brand-title">ziki</span>
-          <span className="sidebar-brand-pill">HANDSHAKE</span>
+          <span className="sidebar-brand-pill">Handshake</span>
         </div>
 
         {/* Workspace Card: Zedu Engineering Hub */}

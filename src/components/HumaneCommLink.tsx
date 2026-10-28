@@ -245,23 +245,23 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
           <div className="copilot-hero-info">
             <div className="copilot-tagline-row">
               <span className="copilot-badge-core">
-                <Sparkles size={12} />
-                LEAD COPILOT &amp; ARCHITECT
+                <Sparkles size={11} />
+                Lead Architect
               </span>
               <span className="copilot-badge-model">
-                Google ADK • Gemini 1.5 Pro + Claude 3.5 Sonnet
+                Google ADK • Gemini &amp; Claude
               </span>
               <span className="copilot-badge-live">
                 <span className="live-pulsar" />
-                18ms Realtime WebSocket
+                Live WebSocket
               </span>
             </div>
 
             <h1 className="copilot-hero-title">
-              Blogger AI Executive Command Deck
+              Blogger AI Executive Copilot
             </h1>
             <p className="copilot-hero-desc">
-              Your autonomous AI partner for Zedu Studio. Blogger supervises Gojo (Frontend &amp; 3D Office) and Sukuna (Mobile &amp; Chaos), enforces the Ziki Rule 1 Independence Firewall, and delivers safe, 1-tap handshakes.
+              Your autonomous AI partner for Zedu Studio. Blogger supervises Gojo and Sukuna, verifies Ziki Rule 1, and presents verified handshakes for human approval.
             </p>
           </div>
         </div>
@@ -279,7 +279,7 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
                 <span className="tile-icon-box">{cmd.icon}</span>
                 <span className="tile-badge">{cmd.badge}</span>
               </div>
-              <strong className="tile-title">{cmd.title}</strong>
+              <span className="tile-title">{cmd.title}</span>
               <p className="tile-desc">{cmd.desc}</p>
             </button>
           ))}
@@ -410,9 +410,9 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
             {/* Live Audio Visualizer Banner during push-to-talk */}
             {isRecording && (
               <div className="recording-status-strip animate-slide-down">
-                <div className="flex items-center gap-2 text-red-400 font-bold text-xs">
+                <div className="flex items-center gap-2 text-rose-500 text-xs font-medium">
                   <span className="recording-beacon" />
-                  <span>LISTENING TO SUPERVISOR (0:0{recordingSeconds})</span>
+                  <span>Listening... (0:0{recordingSeconds})</span>
                 </div>
                 <div className="live-audio-bars">
                   <span className="eq-bar bar-1" />
@@ -543,10 +543,10 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
             <div className="telemetry-card spotlight-card">
               <div className="spotlight-header">
                 <span className="spotlight-tag">
-                  <Flame size={12} className="text-amber-400" />
-                  READY FOR HANDSHAKE
+                  <Flame size={12} className="text-amber-500" />
+                  Pending Handshake
                 </span>
-                <span className="spotlight-points font-mono">+{pendingProposal.pointsReward} PTS</span>
+                <span className="spotlight-points font-mono">+{pendingProposal.pointsReward} pts</span>
               </div>
 
               <h4 className="spotlight-issue-title">
@@ -586,10 +586,10 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
           <div className="telemetry-card sprint-card">
             <div className="sprint-header">
               <div>
-                <span className="sprint-sub">SPRINT 14 GOAL</span>
+                <span className="sprint-sub">Sprint 14 Target</span>
                 <h4 className="sprint-title">Team Neo-Mando</h4>
               </div>
-              <span className="sprint-pct font-mono font-bold text-blue-400">
+              <span className="sprint-pct font-mono text-blue-600 font-semibold">
                 {percentComplete}%
               </span>
             </div>
