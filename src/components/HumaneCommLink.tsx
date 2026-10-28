@@ -11,7 +11,6 @@ import {
   Play,
   Pause,
   ShieldCheck,
-  Zap,
   Activity,
   ArrowRight,
   Code2,
@@ -57,7 +56,7 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
   onVoiceAction,
   agents,
   proposals,
-  offers,
+  offers: _offers,
   totalPoints,
   targetPoints,
   onApproveProposal,
@@ -83,10 +82,10 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
   const msgCountRef = useRef(1);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // Quick Action Command Tiles
+  // Quick Action Command Tiles (reduced to 2 high-priority actions)
   const QUICK_COMMANDS = [
     {
-      icon: <Sparkles size={16} className="text-blue-400" />,
+      icon: <Sparkles size={16} className="text-blue-500" />,
       title: 'Issue #1042 Voice Briefing',
       desc: '3D Office layout toast false-alarm analysis',
       query: 'What is Zedu 3D Office & Issue #1042?',
@@ -94,28 +93,12 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
       color: 'blue',
     },
     {
-      icon: <Activity size={16} className="text-emerald-400" />,
+      icon: <Activity size={16} className="text-emerald-500" />,
       title: 'Autonomous Fleet Audit',
       desc: 'Check Blogger, Gojo & Sukuna compliance',
       query: 'Run autonomous diagnostic sweep on all agents',
       badge: 'Zero-Trust',
       color: 'emerald',
-    },
-    {
-      icon: <ShieldCheck size={16} className="text-purple-400" />,
-      title: 'Independence Firewall',
-      desc: 'Verify Gojo & Sukuna collusion boundary',
-      query: 'Why can’t Sukuna review Gojo’s work?',
-      badge: 'Rule 1 Enforced',
-      color: 'purple',
-    },
-    {
-      icon: <Zap size={16} className="text-amber-400" />,
-      title: 'Triage 60s Dispatch Offer',
-      desc: offers.length > 0 ? `${offers[0].title.slice(0, 36)}...` : 'PR #408 zero-risk review (+10 pts)',
-      query: 'What is the Fast Validation Race on Ziki?',
-      badge: `${offers.length} Active`,
-      color: 'amber',
     },
   ];
 
@@ -244,24 +227,17 @@ export const HumaneCommLink: React.FC<HumaneCommLinkProps> = ({
 
           <div className="copilot-hero-info">
             <div className="copilot-tagline-row">
-              <span className="copilot-badge-core">
-                <Sparkles size={11} />
-                Lead Architect
-              </span>
-              <span className="copilot-badge-model">
-                Google ADK • Gemini &amp; Claude
-              </span>
               <span className="copilot-badge-live">
                 <span className="live-pulsar" />
-                Live WebSocket
+                Fleet Online • 3 Agents
               </span>
             </div>
 
             <h1 className="copilot-hero-title">
-              Blogger AI Executive Copilot
+              Blogger Copilot
             </h1>
             <p className="copilot-hero-desc">
-              Your autonomous AI partner for Zedu Studio. Blogger supervises Gojo and Sukuna, verifies Ziki Rule 1, and presents verified handshakes for human approval.
+              Lead AI copilot supervising Gojo and Sukuna under zero-trust governance.
             </p>
           </div>
         </div>
